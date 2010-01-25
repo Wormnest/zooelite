@@ -18,6 +18,7 @@ class ZooElite extends AIController {
 require("road/road.nut");
 require("road/builder.nut");
 require("road/placer.nut");
+require("rail/finder.nut");
 
 function ZooElite::Start() {
 	LogManager.Log("Starting up!", 3);
@@ -25,10 +26,16 @@ function ZooElite::Start() {
 	local towns = AITownList();
 	towns.Valuate(AITown.GetPopulation);
 	towns.Sort(AIAbstractList.SORT_BY_VALUE, false);
-	RoutePlanner.getRegionalStations();
+	//RoutePlanner.getRegionalStations();
+	local center_tile = AIMap.GetTileIndex(AIMap.GetMapSizeX() / 2, AIMap.GetMapSizeY() / 2);
 	foreach(town, townIndex in towns) {
-		BuildMaxBusStationsInTown(town);
+		//Inputs: town, in_direction_of_tile, platforms, is_terminus(should be true)
+		//ZooElite.BuildRailStationForTown(town, center_tile, 2, true);
+		//ZooElite.BuildMaxBusStationsInTown(town);
 	}
+	
+	
+	
 		
 	// Make sure we can actually operate
 	if(AIGameSettings.IsDisabledVehicleType(AIVehicle.VT_RAIL) ||

@@ -1,0 +1,7 @@
+This file should log all outstanding issues or things that we would like to work on/address
+
+City Rail Station Placement Finder
+---------------------
+-Radius search for things at the edge of the map will fail...it will not add all valid tiles within a rectangle, if it is near the edge it will just fail.
+-Location chosen based on cost to flatten. Should instead be chosen on factors including proximity/mergeablity with close cities, proximity to actual city
+-Bus stops still need to be attached and connected to city
