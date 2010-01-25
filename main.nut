@@ -27,7 +27,7 @@ function ZooElite::Start() {
 	towns.Sort(AIAbstractList.SORT_BY_VALUE, false);
 	RoutePlanner.getRegionalStations();
 	foreach(town, townIndex in towns) {
-		//BuildMaxBusStationsInTown(town);
+		BuildMaxBusStationsInTown(town);
 	}
 		
 	// Make sure we can actually operate
