@@ -10,6 +10,12 @@ function RoutePlanner::getRegionalStations() {
 	for(local i = 0; i < regions.len(); i += 1) {
 		Sign(regions[i], "Region " + i);
 	}
+	
+	regions = RoutePlanner.centerBalance(regions);
+	
+	for(local i = 0; i < regions.len(); i += 1) {
+		Sign(regions[i], "REBAL " + i);
+	}
 	return regions;
 	
 }
@@ -18,7 +24,8 @@ function RoutePlanner::vMeansCluster(towns) {
 	local regionCount = towns.Count()/5;
 	LogManager.Log("Creating: " + regionCount + " regions" , 4);
 	
-	local regions = array(regionCount, null);
+	local regions = RoutePlanner.aggCluster(towns);
+	/*local regions = array(regionCount, null);
 	
 	//assign regions to centers of 6 first towns
 	//locations will then change by the k-means algorithm
@@ -26,7 +33,7 @@ function RoutePlanner::vMeansCluster(towns) {
 	for(local i = 0; i < regionCount; i += 1) {
 		regions[i] = tempRegion;
 		tempRegion = AITown.GetLocation(towns.Next());
-	}
+	} */
 
 	//run through the algorithm a specified number of times to refine regions
 	for(local i = 0; i < 1; i+= 20) {
@@ -198,3 +205,34 @@ function RoutePlanner::aggCluster(towns) {
 	
 	return regions;
 }
+
+
+function RoutePlanner::centerBalance(regions) {
+
+	local numOtherRegions = regions.len() - 1;
+	local newRegions = array(regions.len(), null);
+	for(local i = 0; i < regions.len(); i += 1) {
+		local region = regions[i];
+		LogManager.Log("region " + i + " has tile id: " + regions[i], 4);
+		local xSum = 0;
+		local ySum = 0;
+		
+		//balance region towards the center
+		for(local j = 0; j < regions.len(); j += 1) {
+			local otherRegion = regions[j];
+			if(otherRegion == region) {
+				xSum += 4*AIMap.GetTileX(otherRegion)/5;
+				ySum += 4*AIMap.GetTileY(otherRegion)/5;
+			}
+			else {
+				xSum += AIMap.GetTileX(otherRegion)/(5*numOtherRegions);
+				ySum += AIMap.GetTileY(otherRegion)/(5*numOtherRegions);
+			}
+		}
+		newRegions[i] = AIMap.GetTileIndex(xSum, ySum);
+		LogManager.Log("region " + i + " is now at center: " + xSum + ", " + ySum, 4);
+	}
+	
+	return newRegions;
+}
+
