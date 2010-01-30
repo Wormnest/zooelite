@@ -7,4 +7,12 @@ City Rail Station Placement Finder
 -Bus stops still need to be attached and connected to city
 -Searching occurs in a radius around city, but buildable rectanges are searched from top-left to bottom-right, meaning the algorithm will always favor placements SE of a city
 -The algorithm searches rectangles, not actually the footprint of what we need to build, although this might be a speed tradeoff...
--While the figure itself is correct, it might be nice to move it on the plot to change where the bus stations go
+-While the figure itself is correct, it might be nice to move it on the plot to change where the bus stations go, or even to change the side the rails converge to?
+
+Regional Rail Station Placement Finder
+------------------------
+-Mostly ok suffers from many of the same issues as above
+
+City Bus Station Placer
+------------------------
+Very accurate and fast, however inital search should probably be limited to 1 station and then repeated. Inital placement of 4+ stations in large cities can be slow.

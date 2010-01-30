@@ -29,8 +29,8 @@ function ZooElite::Start() {
 	//RoutePlanner.getRegionalStations();
 	local center_tile = AIMap.GetTileIndex(AIMap.GetMapSizeX() / 2, AIMap.GetMapSizeY() / 2);
 	foreach(town, townIndex in towns) {
-		//Inputs: town, in_direction_of_tile, platforms, is_terminus(should be true)
-		//ZooElite.BuildRailStationForTown(town, center_tile, 2, true);
+		//Inputs: near town, in_direction_of_tile, platforms, is_terminus(True: Cities, False:regional)
+		//ZooElite.BuildRailStationForTown(town, center_tile, 4, false);
 		//ZooElite.BuildMaxBusStationsInTown(town);
 	}
 	

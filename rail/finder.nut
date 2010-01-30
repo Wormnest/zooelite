@@ -19,7 +19,19 @@ function ZooElite::GetRailStationsForCity(townId) {
 
 function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platforms, is_terminus) {
 	//TODO: Give an "In direction of Tile" option
+
 	
+	//Attempt to determine if we could build on this spot
+	local square_x = RAIL_STATION_PLATFORM_LENGTH + 2 * (platforms);
+	if(is_terminus)
+		square_x -= platforms - 2;
+	
+	//One for return track, one for bus stations, one for road from bus stations?
+	
+	local square_y = 3 + platforms;
+	if(!is_terminus)
+		square_y -= 3;
+		
 	//TODO: What we actually want here is a station associated with a town...it doesn't have to be in a town
 	//Attempt to find exsisting stations close to the town
 	LogManager.Log("Attempting to get rail station for " + AITown.GetName(townId), 3);
@@ -32,16 +44,23 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 	local tilelist = AITileList();
 	local seed_tile = AITown.GetLocation(townId);
 	//local searchRadius = STATION_REUSE_DISTANCE_FROM_TOWN;
-	local searchRadius = 20;
+	local searchRadius = 10;
 	
 	//TODO: IMPORTANT: Improve this algorithm, we otherwise restrict the search too much when things are close to the edge
-	if(AIMap.DistanceFromEdge(AITown.GetLocation(townId)) < searchRadius) {
+	if(AIMap.DistanceFromEdge(AITown.GetLocation(townId)) < searchRadius + square_x || AIMap.DistanceFromEdge(AITown.GetLocation(townId)) < searchRadius + square_y) {
 		searchRadius = AIMap.DistanceFromEdge(AITown.GetLocation(townId)) - 1;
+		tilelist.AddRectangle(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) - searchRadius, AIMap.GetTileY(seed_tile) - searchRadius),
+							AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) + searchRadius, AIMap.GetTileY(seed_tile) + searchRadius)); 
 		LogManager.Log("Town near edge of map, reduced radius search to " + searchRadius, 3);
+		
+	} else {
+		tilelist.AddRectangle(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) - searchRadius - square_x, AIMap.GetTileY(seed_tile) - searchRadius - square_y),
+							AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) + searchRadius, AIMap.GetTileY(seed_tile) + searchRadius)); 
+		Sign(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) - searchRadius - square_x, AIMap.GetTileY(seed_tile) - searchRadius - square_y), "Search Corner 1");
+		Sign(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) + searchRadius, AIMap.GetTileY(seed_tile) + searchRadius), "Search Corner 2");
 	}
 	
-	tilelist.AddRectangle(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) - searchRadius, AIMap.GetTileY(seed_tile) - searchRadius),
-							AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) + searchRadius, AIMap.GetTileY(seed_tile) + searchRadius)); 
+	
 
 	local town_to_tile = AIMap.DistanceManhattan(AITown.GetLocation(townId), direction_of_tileId);
 	LogManager.Log("Town to Tile Distance: " + town_to_tile, 1);
@@ -73,13 +92,6 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 	
 	//IMPORTANT: TODO: RIGHT NOW THIS FUNCTION IS CONFUSING BECAUSE HORIZONTAL AND VERTICAL ARE BACKWARDS
 	
-	//Attempt to determine if we could build on this spot
-	local square_x = RAIL_STATION_PLATFORM_LENGTH + 2 * (platforms + 2);
-	if(is_terminus)
-		square_x -= (platforms + 2);
-	
-	//One for return track, one for bus stations, one for road from bus stations?
-	local square_y = 3 + platforms;
 	
 	local verticletilelist = AITileList();
 	verticletilelist.AddList(tilelist);
@@ -95,22 +107,22 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 	}
 	*/
 	
-	tilelist.Valuate(canBuildRectangleAtCorner, square_x, square_y, false);
+	tilelist.Valuate(canBuildRectangleAtCorner, square_y, square_x);
 	tilelist.RemoveValue(0);
 	
-	verticletilelist.Valuate(canBuildRectangleAtCorner, square_x, square_y, true);
+	verticletilelist.Valuate(canBuildRectangleAtCorner, square_x, square_y);
 	verticletilelist.RemoveValue(0);
 	//Ok so we may or may not actually be able to build on these...let's try to figure out how much it'd cost
 	
 	for(local tileId = tilelist.Begin(); tilelist.HasNext(); tileId = tilelist.Next()) {
-		local result = CostToLevelRectangle(tileId, square_x, square_y, false);
+		local result = CostToLevelRectangle(tileId, square_y, square_x);
 		tilelist.SetValue(tileId, result);
 	}
 	tilelist.RemoveValue(-1);
 	tilelist.Sort(AIAbstractList.SORT_BY_VALUE, true);
 	
 	for(local tileId = verticletilelist.Begin(); verticletilelist.HasNext(); tileId = verticletilelist.Next()) {
-		local result = CostToLevelRectangle(tileId, square_x, square_y, false);
+		local result = CostToLevelRectangle(tileId, square_x, square_y);
 		verticletilelist.SetValue(tileId, result);
 	}
 	verticletilelist.RemoveValue(-1);
@@ -124,6 +136,9 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 	//TODO: ADD A FUNCTION TO GENERATE A SCORING METRIC
 	local vert_propisiton = verticletilelist.Begin();
 	local horz_propisiton = tilelist.Begin();
+	LogManager.Log("Found " + verticletilelist.Count() + " " + tilelist.Count() + " locations for " +  AITown.GetName(townId), 4);
+	Sign(horz_propisiton, "Horz Cor");
+	Sign(vert_propisiton, "Vert Cor");
 	local top_left_tile = null;
 	local horizontal = true;
 	local swap = true;
@@ -142,6 +157,8 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 	}
 	
 	//Attempt to build it!
+	if(!is_terminus)
+		return BuildRegionalStation(top_left_tile, platforms, horizontal, swap);
 	return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, swap);
 		
 	
@@ -158,12 +175,8 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 	*/
 }
 
-function canBuildRectangleAtCorner(tileId, square_x, square_y, verticle) {
-	if(!verticle) {
-		local temp = square_x;
-		square_x = square_y;
-		square_y = temp;
-	}
+function canBuildRectangleAtCorner(tileId, square_x, square_y) {
+	
 	if(!AITile.IsBuildableRectangle(tileId, square_x, square_y))
 		return false;
 	
@@ -175,6 +188,8 @@ function canBuildRectangleAtCorner(tileId, square_x, square_y, verticle) {
 	tilelist.RemoveValue(0);
 	tilelist.Valuate(AITile.IsWaterTile);
 	tilelist.RemoveValue(1);
+	tilelist.Valuate(AITile.IsCoastTile);
+	tilelist.RemoveValue(1);
 	if(tilelist.Count() != old_count) {
 		return false;
 	}
@@ -182,17 +197,12 @@ function canBuildRectangleAtCorner(tileId, square_x, square_y, verticle) {
 	return true;
 }
 
-function CostToLevelRectangle(tileId, square_x, square_y, verticle) {
+function CostToLevelRectangle(tileId, square_x, square_y) {
 	local level_cost = 0;
 	//tileId = top_left_tile;
 	{{
 		local test = AITestMode();
 		local account = AIAccounting();
-		if(!verticle) {
-			local temp = square_x;
-			square_x = square_y;
-			square_y = temp;	
-		}
 		local tiles = AITileList();
 		tiles.AddRectangle(GetTileRelative(tileId, 0, 0),
 								GetTileRelative(tileId, square_x, square_y));
@@ -210,13 +220,241 @@ function CostToLevelRectangle(tileId, square_x, square_y, verticle) {
 	return level_cost;
 }
 
+function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
+	//TODO: Shift might be easy to build in so we'll keep it for now
+	local left_bot_bool = 1;
+	local right_bot_bool = 1;
+	
+	local is_terminus = false;
+	local width = RAIL_STATION_PLATFORM_LENGTH + 2 * (platforms + 1);
+	local height = platforms;
+	if(is_terminus)
+		width -= platforms - 1;
+	if(horz) {
+		local temp = width;
+		width = height;
+		height = temp;
+	}	
+	AITile.DemolishTile(top_left_tile);
+	AITile.DemolishTile(GetTileRelative(top_left_tile, width, height));
+	Sign(GetTileRelative(top_left_tile, 0, 0), "Corner 1");
+	Sign(GetTileRelative(top_left_tile, width, height), "Corner 2");
+	AITile.LevelTiles(top_left_tile, GetTileRelative(top_left_tile, width, height));
+	
+	//TODO: Set railtype that we're using, how does this change?
+	local types = AIRailTypeList();
+	AIRail.SetCurrentRailType(types.Begin());
+	
+	if(horz) {
+		LogManager.Log("Building regional, horizontal configuration", 3);
+		//We shift the actual tile so that we have room for rails on both sides
+		top_left_tile = GetTileRelative(top_left_tile, 0, platforms + 1);
+		local top_right_tile = GetTileRelative(top_left_tile, 0, RAIL_STATION_PLATFORM_LENGTH);
+		//so the station should actually line up to the top of the bounding box
+		local success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
+
+		if(!success) {
+			LogManager.Log(AIError.GetLastErrorString(), 4);
+			return false;
+		}
+		
+		
+		//Build hookups and signals for each side
+			local exit_tile = GetTileRelative(top_left_tile, left_bot_bool * platforms - left_bot_bool, -platforms - 1);
+			local entry_tile = GetTileRelative(exit_tile, Neg1Bool(left_bot_bool), 0);
+			
+			//Build Entry and exit tiles
+			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NW_SE);
+			AIRail.BuildRailTrack(entry_tile, AIRail.RAILTRACK_NW_SE);
+			if(left_bot_bool == 0) {
+				AIRail.BuildSignal(exit_tile, GetTileRelative(exit_tile, 0, 1), AIRail.SIGNALTYPE_NORMAL);
+				AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, 0, -1), AIRail.SIGNALTYPE_PBS_ONEWAY);
+			} else {
+				AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, 0, 1), AIRail.SIGNALTYPE_NORMAL);
+				AIRail.BuildSignal(exit_tile, GetTileRelative(exit_tile, 0, -1), AIRail.SIGNALTYPE_PBS_ONEWAY);
+			}
+			
+			for(local i = 1; i < platforms; i++) {
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, 0, 1 * i), AIRail.RAILTRACK_NW_SE);
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, 0, 1 * i), AIRail.RAILTRACK_NW_SE);
+				for(local j = 0; j < platforms - i; j++) {
+					AIRail.BuildRailTrack(GetTileRelative(exit_tile, Neg1Bool(left_bot_bool) * j,  1 * (i + j)), GetTrackDirection(AIRail.RAILTRACK_NW_SW, left_bot_bool));
+					AIRail.BuildRailTrack(GetTileRelative(exit_tile, Neg1Bool(left_bot_bool) * j + Neg1Bool(left_bot_bool),  1 * (i + j)), GetTrackDirection(AIRail.RAILTRACK_NE_SE, left_bot_bool));
+				}
+				//Build platform rail and signal	
+			}
+			
+			//Do the twist
+			AIRail.BuildRailTrack(GetTileRelative(entry_tile, 0 , platforms - 1), GetTrackDirection(AIRail.RAILTRACK_NW_NE, left_bot_bool));
+			AIRail.BuildRailTrack(GetTileRelative(exit_tile, 0, platforms -  1), GetTrackDirection(AIRail.RAILTRACK_SW_SE, left_bot_bool));
+			
+			for(local i = 0; i < platforms; i++) {
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, Neg1Bool(left_bot_bool) * i, platforms), AIRail.RAILTRACK_NW_SE);
+				AIRail.BuildSignal(GetTileRelative(exit_tile, Neg1Bool(left_bot_bool) * i, platforms), GetTileRelative(exit_tile, (1 - 2 * left_bot_bool) * i, platforms + 1), AIRail.SIGNALTYPE_PBS);
+			}
+			
+			
+		//Build Second side
+			local entry_tile = GetTileRelative(top_right_tile, right_bot_bool * platforms - right_bot_bool, platforms);
+			local exit_tile = GetTileRelative(entry_tile, Neg1Bool(right_bot_bool), 0);
+			
+			
+			//Build Entry/Exit Tracks
+			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NW_SE);
+			AIRail.BuildRailTrack(entry_tile, AIRail.RAILTRACK_NW_SE);
+			if(right_bot_bool == 0) {
+				AIRail.BuildSignal(exit_tile, GetTileRelative(exit_tile, 0, -1), AIRail.SIGNALTYPE_NORMAL);
+				AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, 0, 1), AIRail.SIGNALTYPE_PBS_ONEWAY);
+			} else {
+				AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, 0, -1), AIRail.SIGNALTYPE_NORMAL);
+				AIRail.BuildSignal(exit_tile, GetTileRelative(exit_tile, 0, 1), AIRail.SIGNALTYPE_PBS_ONEWAY);
+			}
+			
+			for(local i = 1; i < platforms; i++) {
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, 0, -i), AIRail.RAILTRACK_NW_SE);
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, 0, -i), AIRail.RAILTRACK_NW_SE);
+				for(local j = 0; j < platforms - i; j++) {
+					AIRail.BuildRailTrack(GetTileRelative(entry_tile, Neg1Bool(right_bot_bool) * j,  -1 * (i + j)), GetTrackDirection(AIRail.RAILTRACK_SW_SE, right_bot_bool));
+					AIRail.BuildRailTrack(GetTileRelative(entry_tile, Neg1Bool(right_bot_bool) * j + Neg1Bool(right_bot_bool),  -1 * (i + j)), GetTrackDirection(AIRail.RAILTRACK_NW_NE, right_bot_bool));
+				}
+				//Build platform rail and signal	
+			}
+			
+			//Do the twist
+			
+			AIRail.BuildRailTrack(GetTileRelative(entry_tile, 0, -platforms + 1), GetTrackDirection(AIRail.RAILTRACK_NW_SW, right_bot_bool));
+			AIRail.BuildRailTrack(GetTileRelative(exit_tile, 0, -platforms + 1), GetTrackDirection(AIRail.RAILTRACK_NE_SE, right_bot_bool));
+			
+			for(local i = 0; i < platforms; i++) {
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, Neg1Bool(right_bot_bool) * i, -platforms), AIRail.RAILTRACK_NW_SE);
+				AIRail.BuildSignal(GetTileRelative(entry_tile, Neg1Bool(right_bot_bool) * i, -platforms), GetTileRelative(entry_tile, Neg1Bool(right_bot_bool) * i, -platforms - 1), AIRail.SIGNALTYPE_PBS);
+			}
+			
+	} else {
+		LogManager.Log("Building regional, vertical configuration", 3);
+		//We shift the actual tile so that we have room for rails on both sides
+		top_left_tile = GetTileRelative(top_left_tile, platforms + 1, 0);
+		local top_right_tile = GetTileRelative(top_left_tile, RAIL_STATION_PLATFORM_LENGTH, 0);
+		//so the station should actually line up to the top of the bounding box
+		local success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NE_SW, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
+
+		if(!success) {
+			LogManager.Log(AIError.GetLastErrorString(), 4);
+			return false;
+		}
+		
+		
+		//Build hookups and signals for each side
+			local exit_tile = GetTileRelative(top_left_tile, -platforms - 1, left_bot_bool * platforms - left_bot_bool);
+			local entry_tile = GetTileRelative(exit_tile, 0, Neg1Bool(left_bot_bool));
+			
+			//Build Entry and exit tiles
+			Sign(exit_tile, "Exit Tile");
+			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NE_SW);
+			AIRail.BuildRailTrack(entry_tile, AIRail.RAILTRACK_NE_SW);
+			if(left_bot_bool == 1) {
+				AIRail.BuildSignal(exit_tile, GetTileRelative(exit_tile, 1, 0), AIRail.SIGNALTYPE_NORMAL);
+				AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, -1, 0), AIRail.SIGNALTYPE_PBS_ONEWAY);
+			} else {
+				AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, 1, 0), AIRail.SIGNALTYPE_NORMAL);
+				AIRail.BuildSignal(exit_tile, GetTileRelative(exit_tile, -1, 0), AIRail.SIGNALTYPE_PBS_ONEWAY);
+			}
+			
+			for(local i = 1; i < platforms; i++) {
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, 1 * i, 0), AIRail.RAILTRACK_NE_SW);
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, 1 * i, 0), AIRail.RAILTRACK_NE_SW);
+				for(local j = 0; j < platforms - i; j++) {
+					AIRail.BuildRailTrack(GetTileRelative(exit_tile, 1 * (i + j), Neg1Bool(left_bot_bool) * j - left_bot_bool), GetTrackDirection(AIRail.RAILTRACK_NE_SE, left_bot_bool));
+					AIRail.BuildRailTrack(GetTileRelative(exit_tile, 1 * (i + j), Neg1Bool(left_bot_bool) * j + 1 -left_bot_bool), GetTrackDirection(AIRail.RAILTRACK_NW_SW, left_bot_bool));
+				}
+				//Build platform rail and signal	
+			}
+			
+			//Do the twist
+			if(left_bot_bool == 1) {
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, platforms - 1, 0), AIRail.RAILTRACK_NE_SE);
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, platforms -  1, 0), AIRail.RAILTRACK_NW_SW);
+			} else {
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, platforms - 1, 0), GetTrackDirection(AIRail.RAILTRACK_NW_NE, left_bot_bool));
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, platforms -  1, 0), GetTrackDirection(AIRail.RAILTRACK_SW_SE, left_bot_bool));
+			}
+			
+			for(local i = 0; i < platforms; i++) {
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, platforms, Neg1Bool(left_bot_bool) * i), AIRail.RAILTRACK_NE_SW);
+				AIRail.BuildSignal(GetTileRelative(exit_tile, platforms, Neg1Bool(left_bot_bool) * i), GetTileRelative(exit_tile, platforms + 1, Neg1Bool(left_bot_bool) * i), AIRail.SIGNALTYPE_PBS);
+			}
+			
+			
+		//Build Second side
+			local entry_tile = GetTileRelative(top_right_tile, platforms, right_bot_bool * platforms - right_bot_bool);
+			local exit_tile = GetTileRelative(entry_tile, 0, Neg1Bool(right_bot_bool));
+			
+			
+			//Build Entry/Exit Tracks
+			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NE_SW);
+			AIRail.BuildRailTrack(entry_tile, AIRail.RAILTRACK_NE_SW);
+			if(right_bot_bool == 1) {
+				AIRail.BuildSignal(exit_tile, GetTileRelative(exit_tile, -1, 0), AIRail.SIGNALTYPE_NORMAL);
+				AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, 1, 0), AIRail.SIGNALTYPE_PBS_ONEWAY);
+			} else {
+				AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, -1, 0), AIRail.SIGNALTYPE_NORMAL);
+				AIRail.BuildSignal(exit_tile, GetTileRelative(exit_tile, 1, 0), AIRail.SIGNALTYPE_PBS_ONEWAY);
+			}
+			
+			for(local i = 1; i < platforms; i++) {
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, -i, 0), AIRail.RAILTRACK_NE_SW);
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, -i, 0), AIRail.RAILTRACK_NE_SW);
+				for(local j = 0; j < platforms - i; j++) {
+					AIRail.BuildRailTrack(GetTileRelative(entry_tile, -1 * (i + j), Neg1Bool(right_bot_bool) * j + 1 - right_bot_bool), GetTrackDirection(AIRail.RAILTRACK_NW_NE, right_bot_bool));
+					AIRail.BuildRailTrack(GetTileRelative(entry_tile, -1 * (i + j), Neg1Bool(right_bot_bool) * j - right_bot_bool), GetTrackDirection(AIRail.RAILTRACK_SW_SE, right_bot_bool));
+				}
+				//Build platform rail and signal	
+			}
+			
+			//Do the twist
+			if(right_bot_bool == 1) {
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, -platforms + 1, 0), GetTrackDirection(AIRail.RAILTRACK_NW_SW, right_bot_bool));
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, -platforms + 1, 0), GetTrackDirection(AIRail.RAILTRACK_NE_SE, right_bot_bool));
+			} else {
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, -platforms + 1, 0), AIRail.RAILTRACK_NE_SE);
+				AIRail.BuildRailTrack(GetTileRelative(exit_tile, -platforms + 1, 0), AIRail.RAILTRACK_NW_SW);	
+			}
+			
+			for(local i = 0; i < platforms; i++) {
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, -platforms, Neg1Bool(right_bot_bool) * i), AIRail.RAILTRACK_NE_SW);
+				AIRail.BuildSignal(GetTileRelative(entry_tile, -platforms, Neg1Bool(right_bot_bool) * i), GetTileRelative(entry_tile, -platforms - 1, Neg1Bool(right_bot_bool) * i), AIRail.SIGNALTYPE_PBS);
+			}
+	}
+	
+}
+
+function GetTrackDirection(dir, rot) {
+	if(rot == 0)
+		return dir;
+	switch (dir) {
+		case AIRail.RAILTRACK_NW_SE: return AIRail.RAILTRACK_NW_SE;
+		case AIRail.RAILTRACK_NW_SW: return AIRail.RAILTRACK_NW_NE;
+		case AIRail.RAILTRACK_NE_SE: return AIRail.RAILTRACK_SW_SE;
+		case AIRail.RAILTRACK_SW_SE: return AIRail.RAILTRACK_NE_SE;
+		case AIRail.RAILTRACK_NW_NE: return AIRail.RAILTRACK_NW_SW;	
+	}	
+}
+
+function Neg1Bool(aBool) {
+	return (1 - 2 * aBool);
+}
+
+function Pos1Bool(aBool) {
+	return (-1 + 2 * aBool);
+}
+
 function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, shift) {
 	shift = false;
 	//Let's level it quick
-	local width = RAIL_STATION_PLATFORM_LENGTH + 2 * (platforms + 2);
+	local width = RAIL_STATION_PLATFORM_LENGTH + (2 * platforms);
 	local height = 3 + platforms;
 	if(is_terminus)
-		width -= platforms + 2;
+		width -= platforms - 2;
 	if(horz) {
 		local temp = width;
 		width = height;
@@ -224,8 +462,13 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 	}
 	AITile.DemolishTile(top_left_tile);
 	AITile.DemolishTile(GetTileRelative(top_left_tile, width, height));
+	if(!AITile.IsBuildableRectangle(top_left_tile, width, height))
+		LogManager.Log("You stupid shit, this isn't buildable", 4);
+	
+	
 	Sign(GetTileRelative(top_left_tile, 0, 0), "Corner 1");
 	Sign(GetTileRelative(top_left_tile, width, height), "Corner 2");
+	
 	AITile.LevelTiles(top_left_tile, GetTileRelative(top_left_tile, width, height));
 	
 	//TODO: Set railtype that we're using, how does this change?
@@ -237,6 +480,7 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 	//Determine if top_left_tile is towards the city or not
 	if(AIMap.DistanceManhattan(AITown.GetLocation(townId), top_left_tile) > AIMap.DistanceManhattan(AITown.GetLocation(townId), GetTileRelative(top_left_tile, width, height))) {
 		//Shoot, it's backwards, we'll get around to this later	
+		//I think this is somewhere else already?
 	}
 	
 	if(horz && !shift) {
@@ -254,41 +498,44 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 		local turn_tile = GetTileRelative(top_left_tile, platforms, 0);
 		AIRail.BuildRailTrack(turn_tile, AIRail.RAILTRACK_NE_SE);
 		AIRail.BuildSignal(turn_tile, GetTileRelative(turn_tile, -1, 0), AIRail.SIGNALTYPE_NORMAL);
-		for(local i = 0; i < platforms; i++) {
-			local tile = GetTileRelative(top_left_tile, i, 0);
-			AIRail.BuildRailTrack(tile, AIRail.RAILTRACK_SW_SE);
-			AIRail.BuildRailTrack(GetTileRelative(top_left_tile, i, 1), AIRail.RAILTRACK_NW_SE);
-			AIRail.BuildSignal(GetTileRelative(top_left_tile, i, 1), GetTileRelative(top_left_tile, i, 2), AIRail.SIGNALTYPE_PBS);
-		}
-		for(local i = 1; i < platforms; i++) {
-			local tile = GetTileRelative(top_left_tile, i, 0);
-			AIRail.BuildRailTrack(tile, AIRail.RAILTRACK_NE_SW);
-		}
 		
-		local signal_tile = false;
-		local exit_tile = turn_tile;
-		for(local i = 1; i <= RAIL_STATION_PLATFORM_LENGTH + platforms + 1; i++) {
-			local tile = GetTileRelative(turn_tile, 0, i);
-			AIRail.BuildRailTrack(tile, AIRail.RAILTRACK_NW_SE);
-			if(!signal_tile) {
-				signal_tile = true;
-			} else {
-				AIRail.BuildSignal(tile, GetTileRelative(tile, 0, -1), AIRail.SIGNALTYPE_NORMAL);
-				signal_tile = false;
+		//The next two things build the loop around back...only for terminus
+		if(is_terminus) {
+			for(local i = 0; i < platforms; i++) {
+				local tile = GetTileRelative(top_left_tile, i, 0);
+				AIRail.BuildRailTrack(tile, AIRail.RAILTRACK_SW_SE);
+				AIRail.BuildRailTrack(GetTileRelative(top_left_tile, i, 1), AIRail.RAILTRACK_NW_SE);
+				AIRail.BuildSignal(GetTileRelative(top_left_tile, i, 1), GetTileRelative(top_left_tile, i, 2), AIRail.SIGNALTYPE_PBS);
 			}
-			exit_tile = tile;
-		}
-		
-		//Exit is now properly built, build entrances
-		local entry_tile = GetTileRelative(exit_tile, -1, 0);
-		AIRail.BuildRailTrack(entry_tile, AIRail.RAILTRACK_NW_SE);
-		AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, 0, 1), AIRail.SIGNALTYPE_PBS_ONEWAY);
-		for(local i = 1; i < platforms; i++) {
-			AIRail.BuildRailTrack(GetTileRelative(entry_tile, 0, -1 * i), AIRail.RAILTRACK_NW_SE);
-			for(local j = 0; j < platforms - i; j++) {
-				AIRail.BuildRailTrack(GetTileRelative(entry_tile, -1 * j,  -1 * (i + j)), AIRail.RAILTRACK_NE_SE);
-				AIRail.BuildRailTrack(GetTileRelative(entry_tile, -1 * j - 1,  -1 * (i + j)), AIRail.RAILTRACK_NW_SW);
-			}	
+			for(local i = 1; i < platforms; i++) {
+				local tile = GetTileRelative(top_left_tile, i, 0);
+				AIRail.BuildRailTrack(tile, AIRail.RAILTRACK_NE_SW);
+			}		
+			local signal_tile = false;
+			local exit_tile = turn_tile;
+			for(local i = 1; i <= RAIL_STATION_PLATFORM_LENGTH + platforms + 1; i++) {
+				local tile = GetTileRelative(turn_tile, 0, i);
+				AIRail.BuildRailTrack(tile, AIRail.RAILTRACK_NW_SE);
+				if(!signal_tile) {
+					signal_tile = true;
+				} else {
+					AIRail.BuildSignal(tile, GetTileRelative(tile, 0, -1), AIRail.SIGNALTYPE_NORMAL);
+					signal_tile = false;
+				}
+				exit_tile = tile;
+			}
+			
+			//Exit is now properly built, build entrances
+			local entry_tile = GetTileRelative(exit_tile, -1, 0);
+			AIRail.BuildRailTrack(entry_tile, AIRail.RAILTRACK_NW_SE);
+			AIRail.BuildSignal(entry_tile, GetTileRelative(entry_tile, 0, 1), AIRail.SIGNALTYPE_PBS_ONEWAY);
+			for(local i = 1; i < platforms; i++) {
+				AIRail.BuildRailTrack(GetTileRelative(entry_tile, 0, -1 * i), AIRail.RAILTRACK_NW_SE);
+				for(local j = 0; j < platforms - i; j++) {
+					AIRail.BuildRailTrack(GetTileRelative(entry_tile, -1 * j,  -1 * (i + j)), AIRail.RAILTRACK_NE_SE);
+					AIRail.BuildRailTrack(GetTileRelative(entry_tile, -1 * j - 1,  -1 * (i + j)), AIRail.RAILTRACK_NW_SW);
+				}	
+			}
 		}
 		
 	} else if (horz && shift) {
