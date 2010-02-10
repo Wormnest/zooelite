@@ -1,6 +1,9 @@
 
-
+//Builds at most -max- more stations in the given town
+//returns an array of stations built
 function ZooElite::BuildMaxBusStationsInTown(town, max) {
+	
+	//Limit the number of station to max or some other number we invent
 	local pop = AITown.GetPopulation(town);
 	pop = Floor(pop / 250);
 	if(pop < 1)
@@ -11,27 +14,38 @@ function ZooElite::BuildMaxBusStationsInTown(town, max) {
 		array = ZooElite.FindPlacesInTownForMaxNMoreBusStations(town, pop);
 	else
 		array = ZooElite.FindPlacesInTownForMaxNMoreBusStations(town, max);
+		
+	//Something went wrong
 	if(array == false)
 		return false;
+		
 	//Sort each list of tiles based on how many passengers each list would pull
 	local testmode = AITestMode();
-	local success = [7];
+	local failed = [7];
 	array.sort(custom_compare);
-	while(success.len() != 0 && array.len() > 0) {
-		local max_list = array.top();
-		success = ZooElite.BuildBusStationList(max_list);
+	local max_list = [];
+	while(failed.len() != 0 && array.len() > 0) {
+		 max_list = array.top();
+		failed = ZooElite.BuildBusStationList(max_list);
 		if(success.len() == 0) {
+			//Choose this set to build
 			testmode = null;
 			LogManager.Log("Built "+ max_list.len() +"  Stations in " + AITown.GetName(town), 3);
-			success = ZooElite.BuildBusStationList(max_list);
+			failed = ZooElite.BuildBusStationList(max_list);
 		} else {
 			array.remove(array.len() - 1);
 		}
 	}
 	
+	//Once we break the loop, return what we built
+	if(failed.len() == 0) {
+		return max_list;
+	}
+	
 }
 
 //Build station list assuming that you already have verified the tile you want
+//Returns list of stations we failed to build
 function ZooElite::BuildBusStationList(list) {
 	//If the list is empty or null, break
 	if(list == false || list.len() < 1)
@@ -43,7 +57,7 @@ function ZooElite::BuildBusStationList(list) {
 		local temptilelist = GetNeighbours4(tileIndex);
 			if(AIRoad.IsRoadTile(tileIndex)) {
 				//We want a drive through, now to orient it
-				LogManager.Log("Building Drive through Station on: " + tileIndex, 3);
+				LogManager.Log("Building Drive through Station on: " + tileIndex, 1);
 				for(local frontTileIndex = temptilelist.Begin(); temptilelist.HasNext(); frontTileIndex = temptilelist.Next()) {
 					//Are we facing a road tile
 					if(!success && AIRoad.IsRoadTile(frontTileIndex)) {
@@ -56,7 +70,7 @@ function ZooElite::BuildBusStationList(list) {
 				}
 			} else {
 				//we want a depot...orient
-				LogManager.Log("Trying to build depot at " + tileIndex, 3);
+				LogManager.Log("Trying to build depot at " + tileIndex, 1);
 				for(local frontTileIndex = temptilelist.Begin(); temptilelist.HasNext(); frontTileIndex = temptilelist.Next()) {
 					//Are we facing a road tile?
 					if(!success && AIRoad.IsRoadTile(frontTileIndex)) {
@@ -69,17 +83,15 @@ function ZooElite::BuildBusStationList(list) {
 				}
 			}
 		if(!success) {
+			//TODO: Change This since we might be running in test from above
 			failedLocations.push(tileIndex);
-			//TODO: Change This
-			LogManager.Log("Failed to build station in " + AITown.GetName(AITile.GetClosestTown(tileIndex)) + " on tile " + tileIndex + "! Error: " + AIError.GetLastErrorString()	, 4);	
-			AITile.DemolishTile(tileIndex);
-			Sign(tileIndex, "I wanted a depot here, but now it's dead");
+			LogManager.Log("Failed to build station in " + AITown.GetName(AITile.GetClosestTown(tileIndex)) + " on tile " + tileIndex + "! Error: " + AIError.GetLastErrorString()	, 1);	
 		}
 	}
 	return failedLocations;
-	//TODO: Return an appropriate value...perhaps a list of stations which we could not build?
 }
 
+//Builds a road depot in the given town (or returns an already existing one)
 function ZooElite::BuildDepotForTown(townId) {
 	local depots = AIDepotList(AITile.TRANSPORT_ROAD);
 	depots.Valuate(AITile.GetClosestTown);
@@ -87,21 +99,61 @@ function ZooElite::BuildDepotForTown(townId) {
 	if(depots.Count() > 1) {
 		return depots.Begin();
 	}
-	//TODO: Search for a depot location to build, build, and return spot
+	
+	//Search...similar to bus station placer
+	local tilelist = AITileList();
+	local seed_tile = AITown.GetLocation(townId);
+	
+	//TODO: Constant?
+	local searchRadius = 20;
+	if(AIMap.DistanceFromEdge(seed_tile) < 19)
+		searchRadius = AIMap.DistanceFromEdge(seed_tile) - 1;
+	
+	tilelist.AddRectangle(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) - searchRadius, AIMap.GetTileY(seed_tile) - searchRadius),
+							AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) + searchRadius, AIMap.GetTileY(seed_tile) + searchRadius));
+	//Remove everywhere we cannot build, compute viability and sort
+	tilelist.Valuate(AITile.GetClosestTown);
+	tilelist.KeepValue(townId);
+	
+	//Filter and Build simultaneously
+	local success = false;
+	for(local tileId = tilelist.Begin(); tilelist.HasNext() && !success; tileId = tilelist.Next()) {
+		if(getNumRoadNeighbors(tileId) > 0 && AITile.IsBuildable(tileId) && !AIRoad.IsRoadTile(tileId) && AITile.GetSlope(tileId) == AITile.SLOPE_FLAT) {
+			//Try to build a depot
+			//Get road neighbors
+			local temptilelist = GetNeighbours4(tileId);
+			for(local frontTileIndex = temptilelist.Begin(); temptilelist.HasNext(); frontTileIndex = temptilelist.Next()) {
+				//Are we facing a road tile?
+				if(!success && AIRoad.IsRoadTile(frontTileIndex)) {
+					LogManager.Log("Attempting to face: " + frontTileIndex, 1);
+					success = AIRoad.BuildRoadDepot(tileId, frontTileIndex);
+					if(success && AIRoad.IsRoadDepotTile(tileId)) {
+						AIRoad.BuildRoad(tileId, frontTileIndex);
+						return tileId;
+					}
+				} else {
+					LogManager.Log("Skipping: " + frontTileIndex, 1);
+				}
+			}
+		}
+	}
+	return false;
 }
 
+//Links the given tile to the given town's road grid
+//returns NOTHING
 function ZooElite::LinkTileToTown(tileId, townId) {
 	local town_loc = AITown.GetLocation(townId);
 	//Holder Function for rail builder
 	/* Create an instance of the pathfinder. */
 	local pathfinder = RoadPathFinder();
-	/* Set the cost for making a turn extremely high. */
-	pathfinder.cost.turn = 500;
+	/* Set the cost for making a turn high. */
+	pathfinder.cost.turn = 250;
 	pathfinder.cost.no_existing_road = 120;
 	
 	//TODO: Add some Intelligence to figure out if we can afford things based on available cash / master plan
 	pathfinder.cost.tunnel_per_tile = 200;
-	LogManager.Log("Pathing Stations", 3);
+	LogManager.Log("Pathing Stations", 2);
 	pathfinder.InitializePath([tileId], [town_loc]);
 
 	/* Try to find a path. */
@@ -150,5 +202,5 @@ function ZooElite::LinkTileToTown(tileId, townId) {
 		}
 		path = par;
 	}
-	LogManager.Log("Pathing Done!", 3);
+	LogManager.Log("Pathing Done!", 2);
 }
