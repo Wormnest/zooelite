@@ -7,6 +7,7 @@ City Rail Station Placement Finder
 -Location chosen based on cost to flatten. Should instead be chosen on factors including proximity/mergeablity with close cities, proximity to actual city
 -The algorithm searches rectangles, not actually the footprint of what we need to build, although this might be a speed tradeoff...
 -While the figure itself is correct, it might be nice to move it on the plot to change where the bus stations go, or even to change the side the rails converge to?
+-Issues can arise when the city is near the center of the map
 
 Regional Rail Station Placement Finder
 ------------------------

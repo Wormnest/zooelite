@@ -1,5 +1,6 @@
 
 //Get Potentially usable, existing rail station placements for a given city
+//returns a list of stations within the constant STATION_REUSE_DISTANCE_FROM_TOWN
 function ZooElite::GetRailStationsForCity(townId) {
 	//Get a list of stations which are bus stops in this town
 	local stations = AIStationList(AIStation.STATION_TRAIN);
@@ -17,9 +18,11 @@ function ZooElite::GetRailStationsForCity(townId) {
 	return stations;
 }
 
-function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platforms, is_terminus) {
-	//TODO: Give an "In direction of Tile" option
+//This function actually finds an appropriate build site for the given specifications
+//ARGS: TownId, TileId to search from, Direction to point (MUST BE FAR ENOUGH AWAY), number of platforms, boolean is_terminus
+//RETURNS: stationId of new station?
 
+function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, platforms, is_terminus) {
 	
 	//Attempt to determine if we could build on this spot
 	local square_x = RAIL_STATION_PLATFORM_LENGTH + 2 * (platforms);
@@ -27,26 +30,34 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 		square_x -= platforms - 2;
 	
 	//One for return track, one for bus stations, one for road from bus stations?
-	
 	local square_y = 3 + platforms;
 	if(!is_terminus)
 		square_y -= 3;
 		
+		
+	local tilelist = AITileList();
+	local seed_tile = 0;
+	
 	//TODO: What we actually want here is a station associated with a town...it doesn't have to be in a town
+	//		Moreover, do we want to check from the city distance or now?
 	//Attempt to find exsisting stations close to the town
-	LogManager.Log("Attempting to get rail station for " + AITown.GetName(townId), 3);
-	local curStations = ZooElite.GetRailStationsForCity(townId);
-	if(curStations.Count() > 0) {
-		LogManager.Log("Reusing existing station" + curStations.Begin(), 4);
-		return curStations.Begin();
+	if(AITown.IsValidTown(townId) && !AIMap.IsValidTile(tileId)) {
+		LogManager.Log("Attempting to get rail station for " + AITown.GetName(townId), 3);
+		local curStations = ZooElite.GetRailStationsForCity(townId);
+		if(curStations.Count() > 0) {
+			LogManager.Log("Reusing existing station" + curStations.Begin(), 4);
+			return curStations.Begin();
+		}
+		seed_tile = AITown.GetLocation(townId);
+	} else {
+		seed_tile = tileId;
 	}
 	
-	local tilelist = AITileList();
-	local seed_tile = AITown.GetLocation(townId);
-	//local searchRadius = STATION_REUSE_DISTANCE_FROM_TOWN;
+	//TODO: SHould this be a constant? Should it be computed? Raised slowly?
 	local searchRadius = 10;
 	
 	//TODO: IMPORTANT: Improve this algorithm, we otherwise restrict the search too much when things are close to the edge
+	//Ensure we aren't analyzing off the map as this will cause issues
 	if(AIMap.DistanceFromEdge(AITown.GetLocation(townId)) < searchRadius + square_x || AIMap.DistanceFromEdge(AITown.GetLocation(townId)) < searchRadius + square_y) {
 		searchRadius = AIMap.DistanceFromEdge(AITown.GetLocation(townId)) - 1;
 		tilelist.AddRectangle(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) - searchRadius, AIMap.GetTileY(seed_tile) - searchRadius),
@@ -62,12 +73,11 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 	
 	
 
-	local town_to_tile = AIMap.DistanceManhattan(AITown.GetLocation(townId), direction_of_tileId);
+	//Ensure that we are on the right side of the tile
+	local town_to_tile = AIMap.DistanceManhattan(seed_tile, direction_of_tileId);
 	LogManager.Log("Town to Tile Distance: " + town_to_tile, 1);
 	tilelist.Valuate(AIMap.DistanceManhattan, direction_of_tileId);
-	
-	//TODO: Constant???
-	tilelist.RemoveAboveValue(town_to_tile + 4);
+	tilelist.RemoveAboveValue(town_to_tile + RAILSTATION_IN_DIRECTION_OF_FLEX);
 	
 	
 	
@@ -90,39 +100,55 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 	//-----/----------------\--------
 	
 	
-	//IMPORTANT: TODO: RIGHT NOW THIS FUNCTION IS CONFUSING BECAUSE HORIZONTAL AND VERTICAL ARE BACKWARDS
+	//IMPORTANT: TODO: RIGHT NOW THIS FUNCTION IS CONFUSING BECAUSE HORIZONTAL AND VERTICAL ARE BACKWARDS OR ARE THEY?
 	
 	
+	//Build seperate vertical tilelist
 	local verticletilelist = AITileList();
 	verticletilelist.AddList(tilelist);
 	
+	//Remove unbuildable options
 	tilelist.Valuate(canBuildRectangleAtCorner, square_y, square_x);
 	tilelist.RemoveValue(0);
-	
 	verticletilelist.Valuate(canBuildRectangleAtCorner, square_x, square_y);
 	verticletilelist.RemoveValue(0);
-	//Ok so we may or may not actually be able to build on these...let's try to figure out how much it'd cost
 	
+	//Ok so we may or may not actually be able to build on these...let's try to figure out how much it'd cost
+	//Sort results by cost
 	for(local tileId = tilelist.Begin(); tilelist.HasNext(); tileId = tilelist.Next()) {
 		local result = CostToLevelRectangle(tileId, square_y + 1, square_x + 1);
+		if(result > -1) {
+			result += RAIL_STATION_SEARCH_DISTANCE_WEIGHT * AITile.GetBuildCost(AITile.BT_TERRAFORM) 
+							* AIMap.DistanceManhattan(GetTileRelative(tileId, Floor(square_y / 2), Floor(square_x / 2)), seed_tile);
+			result -= AITile.GetBuildCost(AITile.BT_TERRAFORM) * RAIL_STATION_SEARCH_CARGO_WEIGHT * AITile.GetCargoProduction(GetTileRelative(tileId, Floor(square_x / 2), Floor(square_y / 2)), GetPassengerCargoID(), 4, 4, 3);
+			//Sign(tileId, result);
+		}
 		tilelist.SetValue(tileId, result);
 	}
 	tilelist.RemoveValue(-1);
 	tilelist.Sort(AIAbstractList.SORT_BY_VALUE, true);
-	
 	for(local tileId = verticletilelist.Begin(); verticletilelist.HasNext(); tileId = verticletilelist.Next()) {
 		local result = CostToLevelRectangle(tileId, square_x + 1, square_y + 1);
+		if(result > -1) {
+			result += RAIL_STATION_SEARCH_DISTANCE_WEIGHT * AITile.GetBuildCost(AITile.BT_TERRAFORM) 
+							* AIMap.DistanceManhattan(GetTileRelative(tileId, Floor(square_x / 2), Floor(square_y / 2)), seed_tile);
+			result -= AITile.GetBuildCost(AITile.BT_TERRAFORM) * RAIL_STATION_SEARCH_CARGO_WEIGHT * AITile.GetCargoProduction(GetTileRelative(tileId, Floor(square_x / 2), Floor(square_y / 2)), GetPassengerCargoID(), 4, 4, 3);
+			//Sign(tileId, result);
+		}
+		
 		verticletilelist.SetValue(tileId, result);
 	}
 	verticletilelist.RemoveValue(-1);
 	verticletilelist.Sort(AIAbstractList.SORT_BY_VALUE, true);
 	
+	//This means we can't build here...sad
 	if(verticletilelist.Count() == 0 && tilelist.Count() == 0) {
 		LogManager.Log("Unable to find suitable location to build station in " + AITown.GetName(townId), 4);
 		return false;
 	}
 	
 	//TODO: ADD A FUNCTION TO GENERATE A SCORING METRIC
+	//Evaluate each, and choose the best plot to build on
 	local vert_propisiton = verticletilelist.Begin();
 	local horz_propisiton = tilelist.Begin();
 	LogManager.Log("Found " + verticletilelist.Count() + " " + tilelist.Count() + " locations for " +  AITown.GetName(townId), 4);
@@ -143,7 +169,7 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 			swap = false;
 	}
 	
-	//Attempt to build it!
+	//Attempt to build it by sending it to another function!
 	if(!is_terminus)
 		return BuildRegionalStation(top_left_tile, platforms, horizontal, swap);
 	return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, swap);
@@ -157,11 +183,13 @@ function ZooElite::BuildRailStationForTown(townId, direction_of_tileId, platform
 		local sum = 2* AIMap.DistanceManhattan(tileIndex, AITown.GetLocation(townId))
 						+ AIMap.DistanceManhattan(tileIndex, tileId);
 		tilelist.SetValue(tileIndex, sum);
+		AITile.BT_TERRAFORM
 	}
 	tilelist.Sort(AIAbstractList.SORT_BY_VALUE, true);
 	*/
 }
 
+//Figure out if we can build here...
 function canBuildRectangleAtCorner(tileId, square_x, square_y) {
 	
 	if(!AITile.IsBuildableRectangle(tileId, square_x, square_y))
@@ -184,6 +212,7 @@ function canBuildRectangleAtCorner(tileId, square_x, square_y) {
 	return true;
 }
 
+//Return the cost to flatten this rectangle
 function CostToLevelRectangle(tileId, square_x, square_y) {
 	local level_cost = 0;
 	//tileId = top_left_tile;
@@ -206,6 +235,8 @@ function CostToLevelRectangle(tileId, square_x, square_y) {
 	return level_cost;
 }
 
+//Big nasty function to build a big regional station
+//Regional stations do not have bus stops and are non-terminus stations
 function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 	//TODO: Shift might be easy to build in so we'll keep it for now
 	local left_bot_bool = 1;
@@ -418,6 +449,7 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 	
 }
 
+//Some Helper stuff
 function GetTrackDirection(dir, rot) {
 	if(rot == 0)
 		return dir;
@@ -438,6 +470,8 @@ function Pos1Bool(aBool) {
 	return (-1 + 2 * aBool);
 }
 
+//Build normal city train station.
+//This is a terminus which will have bus stops attached to townId
 function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, shift) {
 	//Let's level it quick
 	local width = RAIL_STATION_PLATFORM_LENGTH + (2 * platforms);
@@ -451,8 +485,6 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 	}
 	AITile.DemolishTile(top_left_tile);
 	AITile.DemolishTile(GetTileRelative(top_left_tile, width + 1, height + 1));
-	if(!AITile.IsBuildableRectangle(top_left_tile, width + 1, height + 1))
-		LogManager.Log("You stupid shit, this isn't buildable", 4);
 	
 	
 	Sign(GetTileRelative(top_left_tile, 0, 0), "Corner 1");
@@ -539,13 +571,13 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 			if(build_tile) {
 				success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
 				AIRoad.BuildRoad(active_tile, front_tile);
-				ZooElite.LinkTileToTown(front_tile, townId);
 				build_tile = false;
 			} else {
 				build_tile = true;
 			}
 			AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, -1, i + 1));
 		}
+		ZooElite.LinkTileToTown(start_tile, townId);
 		
 		
 	} else if (horz && shift) {
@@ -609,13 +641,13 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 			if(build_tile) {
 				success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
 				AIRoad.BuildRoad(active_tile, front_tile);
-				ZooElite.LinkTileToTown(front_tile, townId);
 				build_tile = false;
 			} else {
 				build_tile = true;
 			}
 			AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, 1, -i - 1));
 		}
+		ZooElite.LinkTileToTown(start_tile, townId);
 		
 	} else if(!horz && !shift) {
 		LogManager.Log("Building normal, vertical configuration", 3);
@@ -674,13 +706,13 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 			if(build_tile) {
 				success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
 				AIRoad.BuildRoad(active_tile, front_tile);
-				ZooElite.LinkTileToTown(front_tile, townId);
 				build_tile = false;
 			} else {
 				build_tile = true;
 			}
 			AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, i + 1, 1));
 		}
+		ZooElite.LinkTileToTown(start_tile, townId);
 		
 	} else if(!horz && shift) {
 		LogManager.Log("Building flipped, vertical configuration", 3);
@@ -738,13 +770,13 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 			if(build_tile) {
 				success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
 				AIRoad.BuildRoad(active_tile, front_tile);
-				ZooElite.LinkTileToTown(front_tile, townId);
 				build_tile = false;
 			} else {
 				build_tile = true;
 			}
 			AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, -i - 1, -1));
 		}
+		ZooElite.LinkTileToTown(start_tile, townId);
 	}
 	return stationId;
 	
