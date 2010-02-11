@@ -261,7 +261,7 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 	//TODO: Set railtype that we're using, how does this change?
 	local types = AIRailTypeList();
 	AIRail.SetCurrentRailType(types.Begin());
-	local StationId = 0;
+	local stationId = 0;
 	if(horz) {
 		LogManager.Log("Building regional, horizontal configuration", 3);
 		//We shift the actual tile so that we have room for rails on both sides
