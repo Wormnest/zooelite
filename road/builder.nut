@@ -27,7 +27,7 @@ function ZooElite::BuildMaxBusStationsInTown(town, max) {
 	while(failed.len() != 0 && array.len() > 0) {
 		 max_list = array.top();
 		failed = ZooElite.BuildBusStationList(max_list);
-		if(success.len() == 0) {
+		if(failed.len() == 0) {
 			//Choose this set to build
 			testmode = null;
 			LogManager.Log("Built "+ max_list.len() +"  Stations in " + AITown.GetName(town), 3);
