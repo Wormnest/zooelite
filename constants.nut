@@ -7,3 +7,5 @@ const RAILSTATION_IN_DIRECTION_OF_FLEX = 6; //When finding rail placements, this
 const RAIL_STATION_SEARCH_DISTANCE_WEIGHT = 4; //Larger give more weight to distance from search tile
 const RAIL_STATION_SEARCH_CARGO_WEIGHT = 2; //Larger gives more weight to the station being close to passengers
 const BUS_RADIUS_MULTIPLIER = 1.4; //Multiplier * sqrrt of houses in town gives search radius. Raise to allow more deviation from a square configuration, but longer search times
+const CITY_BUS_CAPACITY_THRESHOLD = 0.6; //If the transported cargo falls under this percent of production, more busses will be created
+const CITY_BUS_CAPACITY_TARGET = 0.8; //Should be higher than threshold...target pct to rebalance to when checking busses
