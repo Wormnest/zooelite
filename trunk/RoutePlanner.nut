@@ -1,47 +1,130 @@
 //TODO: measure by approx route distance/cost rather than actual distance (quick algorithms for finding obstructions?)
 //TODO: buildability measure of tile
+//TODO: Routes after minimum spanning tree
+//TODO: take into acount approx. capacities
 //NOTE: check out test mode
+
+import("pathfinder.road", "RoadPathFinder", 3);
+require("log_manager.nut");
+require("constants.nut");
+require("helper.nut");
+require("rail/finder.nut");
 
 class RoutePlanner	{
 };
 
-//finds regions first by clustering and then by other adjustment functions
-function RoutePlanner::getRegionalStations() {
+//starts the recursive region building process
+function RoutePlanner::buildNetwork() {
 
 	local towns = AITownList();
+	local townArray = [];
+	foreach(town in towns) {
+		townArray.append(town);
+	}
+	RoutePlanner.buildRegions(towns);
 	
-	//this gets the original raw region locations
+}
+
+//the main function that is called recursively to build regions on a set of towns
+//starts with all the towns in the map - eventually gets down to small regions and builds bus routes.
+function RoutePlanner::buildRegions(towns) {
+	
+	//this is our stop condition. if the diameter is small enough we just stop.
+	//TODO: is diameter any different than radius?
+	//note: we only check if there are 6 or less towns. otherwise its a waste of calculation time
+	/*if(towns.Count() <= 6) {
+		local maxDiam = 0;
+		foreach(town1 in towns) {
+			foreach(town2 in towns) {
+				local tempDiam = AIMap.DistanceSquare(AITown.GetLocation(town1), AITown.GetLocation(town2));
+				if(tempDiam > maxDiam) {
+					maxDiam = tempDiam;
+				}
+			}
+		}
+		
+		if(maxDiam < 1000) {
+			RoutePlanner.buildBaseRegion(towns);
+			return towns;
+		}		
+	}*/
+	
 	local regions = RoutePlanner.aggCluster(towns);
 	
-	//now we get the list of regional routes - each route is defined by a pair of regions
-	local regionalRoutes = RoutePlanner.getRegionalRoutes(regions);
-	
-	
-	
-	//mark the regions so we know whats going on
+	//mark the regions and build statoins so we know whats going on (towns.len() gives us some sense of what level of map this region is part of)
 	for(local i = 0; i < regions[0].len(); i += 1) {
-		Sign(regions[0][i], "Region " + i);
+		if(regions[0].len() == 1) {
+			//Sign(regions[0][i], towns.Count() + "BASE " + i);
+		}
+		else {
+			Sign(regions[0][i], towns.Count() + "Region " + i);
+		}
+		
+		local numPlatforms = 1;//regions[1][i].Count()/2;
+		//BuildRegionalStation(regions[0][i], numPlatforms, 1, 0);
 	}
 	
+	local regionalRoutes;
+	
+	if(regions[0].len() == 1) {
+		RoutePlanner.buildBaseRegion(regions);
+		return 0;
+	}
+	else {
+		//now we get the list of regional routes - each route is defined by a pair of regions
+		regionalRoutes = RoutePlanner.getTopRoutes(regions);
+	}
+	
+	
 	//now we balance the region centers towards other nearby regions
-	regions = RoutePlanner.regionBalance(regions, regionalRoutes);
+	//regions = RoutePlanner.regionBalance(regions, regionalRoutes);
 	//now we possibly move regions to towns
-	regions = RoutePlanner.adjustRegions(regions);
+	/*regions = RoutePlanner.adjustRegions(regions);
 	
 	for(local i = 0; i < regions[0].len(); i += 1) {
 		Sign(regions[0][i], "REBAL " + i);
-	}
+	}*/
 	
-	//now mark routes just to get a sense of stuff
-		for(local j = 0; j < regionalRoutes.len(); j += 1) {
+	//now "build" routes just to get a sense of stuff (right now we just mark routes)
+	//before building a route call the function recursively on the regions it connects
+	
+	//mark which subregions we have already built
+	local alreadyBuilt = array(regions[0].len(), 0);
+	for(local j = 0; j < regionalRoutes.len(); j += 1) {
 		local route = regionalRoutes[j];
-		local Yinc =  (AIMap.GetTileY(regions[0][route[0]]) - AIMap.GetTileY(regions[0][route[1]]))/10;
-		//LogManager.Log("Yinc: " + Yinc,4);
-		local Xinc =  (AIMap.GetTileX(regions[0][route[0]]) - AIMap.GetTileX(regions[0][route[1]]))/10;
-		local curY = AIMap.GetTileY(regions[0][route[1]]);
-		local curX = AIMap.GetTileX(regions[0][route[1]]);
-		for(local i = 0; i < 11; i += 1) {
-			Sign(AIMap.GetTileIndex(curX, curY), "R" + j);
+		//TODO:how do we pass/refer to regions. bucketList???
+		if(alreadyBuilt[route[0]] == 0) {
+			RoutePlanner.buildRegions(regions[1][route[0]]);
+			alreadyBuilt[route[0]] = 1;
+		}
+		if(alreadyBuilt[route[1]] == 0) {
+			RoutePlanner.buildRegions(regions[1][route[1]]);
+			alreadyBuilt[route[1]] = 1;
+		}
+		
+		//now we want to connect 2 given regions by their closest cities
+		local city0;
+		local city1;
+		local minDistance = -1;
+		foreach (town0 in regions[1][route[0]]) {
+			foreach (town1 in regions[1][route[1]]) {
+				local newMin = AIMap.DistanceSquare(AITown.GetLocation(town0), AITown.GetLocation(town1));
+				if(minDistance == -1 || newMin < minDistance) {
+					city0 = town0;
+					city1 = town1;
+					minDistance = newMin;
+				}
+			}
+		}
+			
+		local Yinc =  AIMap.GetTileY(AITown.GetLocation(city0)) - AIMap.GetTileY(AITown.GetLocation(city1));
+		//LogManager.Log("Yinc: " + Yinc,3);
+		local Xinc =  AIMap.GetTileX(AITown.GetLocation(city0)) - AIMap.GetTileX(AITown.GetLocation(city1));
+		//local Xinc =  ((AIMap.GetTileX(regions[0][route[0]]) - AIMap.GetTileX(regions[0][route[1]])));
+		local curY = 20*AIMap.GetTileY(AITown.GetLocation(city1));
+		local curX = 20*AIMap.GetTileX(AITown.GetLocation(city1));
+		for(local i = 0; i < 21; i += 1) {
+			Sign(AIMap.GetTileIndex(curX/20, curY/20), "R" + j);
 			curY += Yinc;
 			curX += Xinc;
 		}
@@ -57,7 +140,7 @@ function RoutePlanner::getRegionalStations() {
 //TODO: make useful by moving towns to regions that are easiest to get to rather than by just doing distance
 function RoutePlanner::vMeansCluster(towns) {
 	local regionCount = towns.Count()/5;
-	LogManager.Log("Creating: " + regionCount + " regions" , 4);
+	LogManager.Log("Creating: " + regionCount + " regions" , 3);
 	
 	local regions = RoutePlanner.aggCluster(towns);
 	local regionCenters = regions[0];
@@ -87,11 +170,11 @@ function RoutePlanner::vMeansCluster(towns) {
 		//assign each town to closest region
 		foreach(town, townIndex in towns) {
 			local currentAssignment = 0;
-			local minDistance = AITown.GetDistanceSquareToTile(town, regionCenters[currentAssignment]);
+			local minDistance = SquareRoot(AITown.GetDistanceSquareToTile(town, regionCenters[currentAssignment]));
 		
 			//check each region to see if we should assign to it
 			for(local i = 1; i < regionCount; i += 1) {
-				local newDistance = AITown.GetDistanceSquareToTile(town, regionCenters[i]);
+				local newDistance = SquareRoot(AITown.GetDistanceSquareToTile(town, regionCenters[i]));
 				//if there is a closer region update the assignment
 				if(newDistance < minDistance) {
 					minDistance = newDistance;
@@ -104,8 +187,8 @@ function RoutePlanner::vMeansCluster(towns) {
 			//TODO: figure out this sloppy key/value shit
 			bucketList[currentAssignment].AddItem(town, town);
 		
-			LogManager.Log("bucketList " + currentAssignment + "was just added to with town  " + town,4);
-			//LogManager.Log("bucketList last element: " + bucketList[0].tostring(), 4);
+			LogManager.Log("bucketList " + currentAssignment + "was just added to with town  " + town, 3);
+			//LogManager.Log("bucketList last element: " + bucketList[0].tostring(), 3);
 		}
 	
 		//now update centers of regions
@@ -124,11 +207,11 @@ function RoutePlanner::vMeansCluster(towns) {
 			//averages
 			local xAvg = xSum / numTowns;
 			local yAvg = ySum / numTowns;
-			LogManager.Log("region " + i + " has " + numTowns + " towns", 4);
-			LogManager.Log("region " + i + " has " + xSum + " xSum", 4);
-			LogManager.Log("region " + i + " has " + ySum + " ySum", 4);
+			LogManager.Log("region " + i + " has " + numTowns + " towns", 3);
+			LogManager.Log("region " + i + " has " + xSum + " xSum", 3);
+			LogManager.Log("region " + i + " has " + ySum + " ySum", 3);
 		
-			LogManager.Log("region " + i + "now at center: " + xAvg + ", " + yAvg, 4);
+			LogManager.Log("region " + i + "now at center: " + xAvg + ", " + yAvg, 3);
 			//set region to average x and y value:
 			regionCenters[i] = AIMap.GetTileIndex(xAvg, yAvg);
 		}
@@ -140,7 +223,9 @@ function RoutePlanner::vMeansCluster(towns) {
 
 
 //finds regions using an agglomerated clustering algorithm
+//returns 2-d array - regions[0] = region centers, regions[1] = bucketList
 //TODO: speed up algorithm for larger town counts - need to aggregate multiple regions on each pass
+//TODO: continue clustering after threshold miss (use skip index and sorting)
 function RoutePlanner::aggCluster(towns) {
 
 	//will hold region's locations (centers and towns in each region
@@ -149,9 +234,13 @@ function RoutePlanner::aggCluster(towns) {
 	//will hold centers of regions
 	local regionCenters = array(towns.Count());
 	//will hold actual towns in region
-	LogManager.Log("the number of towns is: " + towns.Count(), 4);
-	local finalNumRegions = towns.Count()*4/5;
-	//LogManager.Log("the number of recursions will be: " + finalNumRegions, 4);
+	//LogManager.Log("the number of towns is: " + towns.Count(), 3);
+	local numAggs = towns.Count()-4;
+	if(numAggs < 0) {
+		numAggs = 0;
+	}
+	
+	//LogManager.Log("the number of recursions will be: " + finalNumRegions, 3);
 	local bucketList = array(towns.Count(), null);
 	
 	//initialize buckets
@@ -166,28 +255,56 @@ function RoutePlanner::aggCluster(towns) {
 		regionCenters[i] = AITown.GetLocation(town);
 		i += 1;
 	}
+	
+	//if we have only one town in this region
+	if(regionCenters.len() == 1) {
+		return [regionCenters, bucketList];
+	}
 
 	//run through agglomeration a certain number of times
-	for(local j = 0; j < finalNumRegions; j += 1) {
-
-		//firstwe figure out which 2 regions to combine
+	local minDistance = AIMap.DistanceSquare(regionCenters[0], regionCenters[1]);
+	for(local r = 0; r < regionCenters.len()-1; r += 1)	{
+		for(local c = r+1; c < regionCenters.len(); c += 1) {
+				
+			local newDistance = AIMap.DistanceSquare(regionCenters[r], regionCenters[c]);
+			if(newDistance < minDistance) {
+				minDistance = newDistance;
+			}	
+		}	
+	}
+	
+	local j = 0;
+	if(numAggs < 4) {
+		numAggs = regionCenters.len()-1;
+	}
+	local subRegionCount = regionCenters.len()-1;
+	while((j < numAggs)) {// || ((minDistance < 1000) && (j < subRegionCount))) {
+	//LogManager.Log("j: " + j,4);
+		j += 1;
+		//first we figure out which 2 regions to combine
 		local aggRegion1 = 0;
 		local aggRegion2 = 1;
-		local minDistance = AIMap.DistanceSquare(regionCenters[aggRegion1], regionCenters[aggRegion2]);
-		for(local r = 0; r < regionCenters.len(); r += 1)	{
-			for(local c = 0; c < regionCenters.len(); c += 1) {
+		local tempMinDistance = AIMap.DistanceSquare(regionCenters[aggRegion1], regionCenters[aggRegion2]);
+		for(local r = 0; r < regionCenters.len()-1; r += 1)	{
+			for(local c = r+1; c < regionCenters.len(); c += 1) {
 				
-				if(r != c) {
-					local newDistance = AIMap.DistanceSquare(regionCenters[r], regionCenters[c]);
-					if(newDistance < minDistance) {
-						minDistance = newDistance;
-						aggRegion1 = r;
-						aggRegion2 = c;
-					}	
-				}
+				local newDistance = AIMap.DistanceSquare(regionCenters[r], regionCenters[c]);
+				if(newDistance < tempMinDistance) {
+					tempMinDistance = newDistance;
+					aggRegion1 = r;
+					aggRegion2 = c;
+				}	
 			}	
 		}
+		
+		minDistance = tempMinDistance;
 	
+		//stop the algorithm if it is creating too spead out of regions
+		/*local maxDiam = 5000;
+		if(minDistance > maxDiam) {
+			break;
+		}*/
+		
 		LogManager.Log("the regions to aggregate are: " + aggRegion1 + " , " + aggRegion2, 4);
 	
 		//now we need to actually aggregate these regions:
@@ -214,18 +331,16 @@ function RoutePlanner::aggCluster(towns) {
 			}
 		}
 		
-		bucketList = newBucketList;
-		
 		//now recalculate the region centers
-		regionCenters = array(bucketList.len(), null);
+		local newRegionCenters = array(newBucketList.len(), null);
 		
-		for(local i = 0; i < regionCenters.len(); i += 1) {
+		for(local i = 0; i < newRegionCenters.len(); i += 1) {
 			local xSum = 0;
 			local ySum = 0;
 			local numTowns = 0;
 
 			//sum x and y coordinates of all towns in region
-			foreach(town in bucketList[i]) {
+			foreach(town in newBucketList[i]) {
 				xSum += AIMap.GetTileX(AITown.GetLocation(town));
 				ySum += AIMap.GetTileY(AITown.GetLocation(town));
 				numTowns += 1;
@@ -240,11 +355,25 @@ function RoutePlanner::aggCluster(towns) {
 		
 			//LogManager.Log("region " + i + "now at center: " + xAvg + ", " + yAvg, 4);
 			//set region to average x and y value:
-			regionCenters[i] = AIMap.GetTileIndex(xAvg, yAvg);
+			newRegionCenters[i] = AIMap.GetTileIndex(xAvg, yAvg);
 		}
+		
+		/*//only continue if this will not produce a region that is too big
+		local threshold = 3000;
+		local maxDiam = 0;
+		foreach(town in newBucketList[0]) {
+			local diam = SquareRoot(AITown.GetDistanceSquareToTile(town, newRegionCenters[0]));
+			if(diam > maxDiam)
+				maxDiam = diam;
+		}
+		*/
+		//if(maxDiam < threshold) {
+			bucketList = newBucketList;
+			regionCenters = newRegionCenters;
+		//}
 	}
 	
-	//no return buckets and centers
+	//now return buckets and centers
 	regions = [regionCenters, bucketList];
 	return regions;
 }
@@ -295,17 +424,18 @@ function RoutePlanner::adjustRegions(regions) {
 		local diameter = 0;
 		local townCount = 0;
 		foreach(town, townid in regions[1][i]) {
-			diameter += AITown.GetDistanceSquareToTile(town, region);
+			diameter += SquareRoot(AITown.GetDistanceSquareToTile(town, region));
 			townCount += 1;
 		}
 		
-		local threshold = diameter / (townCount*5);
+		//local threshold = diameter / (townCount*5);
+		local threshold = 200;
 		
 		//now check towns. If one is very close to the region move the region center to the town
 		foreach(town, townid in regions[1][i]) {
-			if(AITown.GetDistanceSquareToTile(town, region) < threshold) {
+			if(SquareRoot(AITown.GetDistanceSquareToTile(town, region)) < threshold) {
 				newRegions[0][i] = AITown.GetLocation(town);
-				threshold = AITown.GetDistanceSquareToTile(town, region);
+				threshold = SquareRoot(AITown.GetDistanceSquareToTile(town, region));
 			}
 		}
 	}
@@ -313,7 +443,9 @@ function RoutePlanner::adjustRegions(regions) {
 	return newRegions;
 }
 
-function RoutePlanner::getRegionalRoutes(regions) {
+//will create a minimum spanning tree covering all the regions
+//Note: no longer used
+function RoutePlanner::getMinSpanningRoutes(regions) {
 	//for each region pair - measure approx. cost (distance?, test mode? water check and shit?)
 	//run kruskal's or similar algoritm
 	
@@ -331,7 +463,7 @@ function RoutePlanner::getRegionalRoutes(regions) {
 		for(local j = i + 1; j < regions[0].len(); j += 1) {
 			possibleRoutes[c][0] = i;
 			possibleRoutes[c][1] = j;
-			possibleRoutes[c][2] = AIMap.DistanceSquare(regions[0][i], regions[0][j]);
+			possibleRoutes[c][2] = SquareRoot(AIMap.DistanceSquare(regions[0][i], regions[0][j]));
 			c += 1;
 		}
 	}
@@ -386,10 +518,257 @@ function RoutePlanner::getRegionalRoutes(regions) {
 	return regionalRoutes;
 }
 
+
+
+
+
+//##########################################################################################################
+//##########################################################################################################
+//##########################################################################################################
+//##########################################################################################################
+
+//regions[0] = regional centers, regions[1] = list of towns in each region
+function RoutePlanner::getTopRoutes(regions) {
+
+	//list of regional populations - saves time to precalculate:
+	local regionalPops = array(regions[0].len(), 0);
+	for(local i = 0; i < regions[0].len(); i += 1) {
+		foreach(town in regions[1][i]) {
+			regionalPops[i] += AITown.GetPopulation(town);
+		}
+	}
+	
+	//list of all possible regional routes
+	local possibleRoutes = []; //array((regions[0].len()*(regions[0].len()-1))/2, null);
+	LogManager.Log("possible routes length: " + possibleRoutes.len(), 4);
+	
+	//each route has region1, region2, added?, shortest current path in graph, population connected by route, route length,
+	//if route length is  > 256 then we're gonna through it out to save time
+	local c = 0;
+	//in this loop we initialize possible routes
+	for(local i = 0; i < regions[0].len(); i += 1) {
+		for(local j = i + 1; j < regions[0].len(); j += 1) {
+			local region1 = i;
+			local region2 = j;
+			local totalPop = regionalPops[i] + regionalPops[j];
+			local distance = SquareRoot(AIMap.DistanceSquare(regions[0][i], regions[0][j]));
+			
+			//now decide whether to add route:
+			if(distance > 0) { // < 250) {
+				local newRoute = array(6,0);
+				newRoute[0] = region1;
+				newRoute[1] = region2;
+				newRoute[2] = 0; //not added yet
+				newRoute[3] = -1; //no shortest path yet
+				newRoute[4] = totalPop;
+				newRoute[5] = distance;
+				
+				possibleRoutes.append(newRoute);
+				c += 1;
+			}
+		}	
+	}
+	
+	LogManager.Log("possible routes length: " + possibleRoutes.len(), 4);
+	
+	local regionalRoutes = [];
+	//basically tells what connected piece of the graph a node is in
+	local clusters = array(regions[0].len(), null);
+	for(local i = 0; i < clusters.len(); i += 1) {
+		clusters[i] = i;
+	}
+	
+	for(local i = 0; i < possibleRoutes.len(); i += 1) {
+		LogManager.Log("possible route from " + possibleRoutes[i][0] + " to " + possibleRoutes[i][1], 4);
+	}
+	
+	//in this loop we add routes - the best first and then adjust the minpath for remaining routes and restart.
+	for(local i = 0; i < possibleRoutes.len(); i += 1) {
+		//holds the route we are currently planning on adding
+		local currentBest = 0;
+		local currentFlowImprovement = 0;
+		
+		//we iterate through all routes and see how adding them will effect flow:
+		for(local j = 0; j < possibleRoutes.len(); j += 1) {
+		
+			//don't check if already added
+			if(possibleRoutes[j][2] == 1) {
+				continue;
+			}
+			
+			local flowImprovement = 0;
+			
+			//will hold the new minimum paths between routes once the candidate route (j) is added
+			local newMinPaths = array(possibleRoutes.len(), -1);
+			
+			//a clone of regionalRoutes that we add the candidate route to
+			local testRoutes = [];
+			
+			for(local k = 0; k < regionalRoutes.len(); k += 1){
+					testRoutes.append(regionalRoutes[k]);
+				}
+			//add on the candidate route
+			testRoutes.append(possibleRoutes[j]);
+			
+			//a clone of clusters updated to reflect the addition of the candidate route:
+			local testClusters = array(clusters.len(), null);
+			
+			//after adding edge update clusters...like a boss! ->this could definately be made more efficient
+			local newClusterNum = clusters[possibleRoutes[j][1]];
+			local oldClusterNum = clusters[possibleRoutes[j][0]];
+			for(local j = 0; j < clusters.len(); j += 1) {
+				if(clusters[j] == oldClusterNum) {
+					testClusters[j] = newClusterNum;
+				}
+				else {
+					testClusters[j] = clusters[j];
+				}
+			}
+					
+			
+			//new recalculate all min paths
+			for(local j = 0; j < possibleRoutes.len(); j += 1) {
+			
+				//if the route already exists don't check
+				if(possibleRoutes[j][2] == 1) {
+					continue;
+				}
+				//2 regions in in route
+				local region1 = possibleRoutes[j][0];
+				local region2 = possibleRoutes[j][1];
+				newMinPaths[j] = RoutePlanner.findMinPath(region1, region2, testRoutes, testClusters);
+			}
+			//record the flow factor:
+			for(local i = 0; i < newMinPaths.len(); i += 1) {
+			
+				if(possibleRoutes[i][2] == 1) {
+					continue;
+				}
+				local oldFlow;
+				local newFlow;
+				if(possibleRoutes[i][3] == -1) {
+					oldFlow = 0;
+				}
+				else {
+					oldFlow = (1.0*possibleRoutes[i][4])/possibleRoutes[i][3];
+				}
+				if(newMinPaths[i] == -1) {
+					newFlow = 0;
+				}
+				else {
+					newFlow = (1.0*possibleRoutes[i][4])/newMinPaths[i];
+				}
+				
+				flowImprovement += (newFlow - oldFlow);
+			}		
+			
+			//now check to see if this candidate is the new best route
+			if(flowImprovement > currentFlowImprovement) {
+				currentFlowImprovement = flowImprovement;
+				currentBest = j;
+			}
+			
+			LogManager.Log(regionalRoutes.len() + " possible route flowImprovement: " + flowImprovement + ", minpath: "  + possibleRoutes[j][3] + ", distance: " + possibleRoutes[j][5] + " from " + possibleRoutes[j][0] + " to " +possibleRoutes[j][1], 4);
+		}
+		//add best route
+		if(currentFlowImprovement < 10) {
+			LogManager.Log("to small to add", 4);
+			break;
+		}
+		regionalRoutes.append(possibleRoutes[currentBest]);
+		possibleRoutes[currentBest][2] = 1;
+		LogManager.Log("added route from: " + possibleRoutes[currentBest][0] + " to " + possibleRoutes[currentBest][1] + "with flowImprovement: " + currentFlowImprovement, 4);
+		
+		//after adding edge update clusters...like a boss! ->this could definately be made more efficient
+		local newClusterNum = clusters[possibleRoutes[currentBest][1]];
+		local oldClusterNum = clusters[possibleRoutes[currentBest][0]];
+		for(local j = 0; j < clusters.len(); j += 1) {
+			if(clusters[j] == oldClusterNum) {
+				clusters[j] = newClusterNum;
+			}
+		}	
+	}
+	
+	return regionalRoutes;
+}
+
+//finds the minimum path between 2 nodes in a weighted graph (Dijkstra's algorithm)
+function RoutePlanner::findMinPath(region1, region2, regionalRoutes, clusters) {
+	local minPath = -1;
+	//LogManager.Log("looking region: " + region1 + " to " + region2, 4);
+	if(clusters[region1] != clusters[region2]) {
+		return minPath;
+	}
+	
+ 	for(local i = 0; i < regionalRoutes.len(); i += 1) {	
+		//if there is a direct connection:
+		if((regionalRoutes[i][0] == region1 && regionalRoutes[i][1] == region2) ||
+			(regionalRoutes[i][0] == region2 && regionalRoutes[i][1] == region1)) {
+				minPath = regionalRoutes[i][5];
+				//LogManager.Log("direct link from: region " + region1 + " to region " + region2, 4);
+			}
+		else if (regionalRoutes[i][0] == region1) {
+			if(clusters[regionalRoutes[i][1]] == clusters[region1]) {
+				//LogManager.Log("recurse", 4);
+				local newClusters= array(clusters.len(), null);
+				for(local j = 0; j < clusters.len(); j += 1) {
+					newClusters[j] = clusters[j];
+				}
+				newClusters[region1] = -1;
+				local recurseValue = RoutePlanner.findMinPath(regionalRoutes[i][1], region2, regionalRoutes, newClusters);
+				local tempMinPath = regionalRoutes[i][5] + recurseValue;
+				if(recurseValue != -1 && (minPath == -1 || tempMinPath < minPath)) {
+					minPath = tempMinPath;
+				}
+			}
+		}
+		else if (regionalRoutes[i][1] == region1) {
+			if(clusters[regionalRoutes[i][1]] == clusters[region1]) {
+				local newClusters= array(clusters.len(), null);
+				for(local j = 0; j < clusters.len(); j += 1) {
+					newClusters[j] = clusters[j];
+				}
+				newClusters[region1] = -1;
+				local recurseValue = RoutePlanner.findMinPath(regionalRoutes[i][0], region2, regionalRoutes, newClusters);
+				local tempMinPath = regionalRoutes[i][5] + recurseValue;
+				if(recurseValue != -1 && (minPath == -1 || tempMinPath < minPath)) {
+					minPath = tempMinPath;
+				}
+			}
+		}
+	}
+			
+	return minPath;
+}
+
+function RoutePlanner::buildBaseRegion(regions) {
+	LogManager.Log("BASE REGION", 4);
+	foreach(town in regions[1][0]) {
+		LogManager.Log("BASE ROUTE", 4);
+		local Yinc =  ((AIMap.GetTileY(AITown.GetLocation(town))) - AIMap.GetTileY(regions[0][0]));
+		//LogManager.Log("Yinc: " + Yinc,3);
+		local Xinc =  ((AIMap.GetTileX(AITown.GetLocation(town))) - AIMap.GetTileX(regions[0][0]));
+		local curY = 20*AIMap.GetTileY(regions[0][0]);
+		local curX = 20*AIMap.GetTileX(regions[0][0]);
+		for(local i = 0; i < 21; i += 1) {
+			Sign(AIMap.GetTileIndex(curX/20, curY/20), "BASE");
+			curY += Yinc;
+			curX += Xinc;
+		}
+	}
+}
+
 function route_compare(a,b)
 {
 if(a[2]>b[2]) return 1;
 else if(a[2]<b[2]) return -1;
+return 0;
+}
+
+function descendingRouteCompare(a,b)
+{
+if(a[2]>b[2]) return -1;
+else if(a[2]<b[2]) return 1;
 return 0;
 }
 
