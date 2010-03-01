@@ -3,7 +3,7 @@ This file should log all outstanding issues or things that we would like to work
 City Rail Station Placement Finder
 ---------------------
 -Radius search for things at the edge of the map will fail...it will not add all valid tiles within a rectangle, if it is near the edge it will just fail.
-		UPDATE: Still some outstandingl,y weird glitches, but better
+		UPDATE: Still some outstandingly weird glitches, but better
 -Location chosen based on cost to flatten. Should instead be chosen on factors including proximity/mergeablity with close cities, proximity to actual city
 -The algorithm searches rectangles, not actually the footprint of what we need to build, although this might be a speed tradeoff...
 -While the figure itself is correct, it might be nice to move it on the plot to change where the bus stations go, or even to change the side the rails converge to?
@@ -18,3 +18,13 @@ City Bus Station Placer
 - Very accurate and fast, however inital search should probably be limited to 1 station and then repeated. Inital placement of 4+ stations in large cities can be slow.
 		UPDATE: Done via Main.nut control
 - Needs to actually return the list of stations built...
+- Some stations are getting built simply because they can...occasionally have NO coverage - Eliminate station placements with 0 Pull? DONE
+- The rail station is not taken into consideration when placing stations, let's try to avoid placing anywhere near a rail station
+- IMPORTANT: Connect Bus tiles within a city so we can take shortcuts...
+
+Overall Running
+----------------------
+- Is it possible for us to accedentially build buses and block our own track routing?
+- On that note, perhaps busses should be connected seperately from building the station? We could save locations and process them later...?
+- Save/Load and Data Structures...saving routes?
+- For God Sake's manage money...

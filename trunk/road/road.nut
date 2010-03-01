@@ -52,8 +52,7 @@ function ZooElite::GetBusStationsInCity(townId) {
 	//Get a list of stations which are bus stops in this town
 	local stations = AIStationList(AIStation.STATION_BUS_STOP);
 	stations.Valuate(AIStation.GetNearestTown);
-	stations.RemoveBelowValue(townId);
-	stations.RemoveAboveValue(townId);
+	stations.KeepValue(townId);
 	return stations;
 }
 

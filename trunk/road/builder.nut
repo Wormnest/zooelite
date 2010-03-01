@@ -106,7 +106,7 @@ function ZooElite::BuildDepotForTown(townId) {
 	
 	//TODO: Constant?
 	local searchRadius = 20;
-	if(AIMap.DistanceFromEdge(seed_tile) < 19)
+	if(AIMap.DistanceFromEdge(seed_tile) <= searchRadius)
 		searchRadius = AIMap.DistanceFromEdge(seed_tile) - 1;
 	
 	tilelist.AddRectangle(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) - searchRadius, AIMap.GetTileY(seed_tile) - searchRadius),
@@ -137,6 +137,7 @@ function ZooElite::BuildDepotForTown(townId) {
 			}
 		}
 	}
+	LogManager.Log("Unable to find depot placement for " + AITown.GetName(townId));
 	return false;
 }
 

@@ -84,7 +84,7 @@ function GetVehicleProfit(vehicleID) {
  * Find the best (largest) engine for a given cargo ID.
  */
 function GetBestEngine(cargoID) {
-	if (!(cargoID in bestEngines)) {
+	//if (!(cargoID in bestEngines)) {
 		local engines = AIEngineList(AIVehicle.VT_ROAD);
 		engines.Valuate(AIEngine.CanRefitCargo, cargoID)
 		engines.KeepValue(1);
@@ -92,10 +92,11 @@ function GetBestEngine(cargoID) {
 		engines.KeepValue(AIRoad.ROADTYPE_ROAD);
 		engines.Valuate(AIEngine.GetCapacity);
 		engines.KeepTop(1);
-		bestEngines[cargoID] <- engines.Begin();
-	}
+		//bestEngines[cargoID] <- engines.Begin();
+		return engines.Begin();
+	//}
 	
-	return bestEngines[cargoID];
+	//return bestEngines[cargoID];
 }
 
 /**
@@ -300,4 +301,36 @@ function Ceiling(x) {
 function Floor(x) {
 	if (x.tointeger().tofloat() == x) return x.tointeger();
 		return x.tointeger();
+}
+
+
+function AIListToArray(list) {
+	local array = [];
+	while(!list.IsEmpty()) {
+		local item = list.Begin();
+		array.add(item);
+		list.RemoveTop(1);	
+	}
+	return array;
+}
+
+
+/**
+*	Implementation of the TSP using a greedy algorithm beginning and ending at start
+*	Returns: An ordered list of the quickest route
+*	Start and all items in list should be tiles
+*/
+function TravelingSalesman(start, list) {
+	local route = [];
+	route.push(start);
+	local cur_loc = start;
+	while(!list.IsEmpty()) {
+		list.Valuate(AIStation.GetDistanceManhattanToTile, cur_loc);
+		list.Sort(AIAbstractList.SORT_BY_VALUE, true);
+		start = list.Begin();
+		list.RemoveTop(1);
+		cur_loc = AIBaseStation.GetLocation(start);
+		route.push(cur_loc);
+	}
+	return route;
 }

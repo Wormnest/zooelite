@@ -44,6 +44,7 @@ function ZooElite::FindPlacesInTownForMaxNMoreBusStations(townId, num) {
 	
 	//TODO:Really this should be randomized for optimal performance, but who cares
 	tilelist.Valuate(AITile.GetCargoProduction, GetPassengerCargoID(), 1, 1, 4);
+	tilelist.RemoveValue(0);
 	tilelist.Sort(AIAbstractList.SORT_BY_VALUE, false);
 	
 	//Setup the inital list to pass
