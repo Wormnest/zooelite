@@ -247,12 +247,36 @@ function RoutePlanner::aggCluster(towns) {
 		bucketList[i] = AIList();
 	}
 
+	local diameter;
+	local centerMassX = 0;
+	local centerMassY = 0;
+	local centerMassTile;
+	
 	//initially, each town is a region
 	local i = 0; //regionID
 	foreach(town, townIndex in towns) {
 		bucketList[i].AddItem(town, town);
 		regionCenters[i] = AITown.GetLocation(town);
+		centerMassX += AIMap.GetTileX(regionCenters[i]);
+		centerMassY += AIMap.GetTileY(regionCenters[i]);
 		i += 1;
+	}
+	
+	centerMassTile = AIMap.GetTileIndex(centerMassX/towns.Count(), centerMassY/towns.Count());
+	diameter = AIMap.DistanceSquare(centerMassTile, AITown.GetLocation(towns.Begin()));
+	foreach(town, townIndex in towns) {
+		if(AIMap.DistanceSquare(centerMassTile, AITown.GetLocation(town)) > diameter) {
+			diameter = AIMap.DistanceSquare(centerMassTile, AITown.GetLocation(town));
+		}
+	}
+	
+	local threshold = 2000;
+	if(diameter < threshold) {
+		local buckets = AIList();
+		foreach(town, townIndex in towns) {
+			buckets.AddItem(town, town);
+		}
+		return [[centerMassTile], [buckets]];
 	}
 	
 	//if we have only one town in this region
@@ -273,11 +297,11 @@ function RoutePlanner::aggCluster(towns) {
 	}
 	
 	local j = 0;
-	if(numAggs < 4) {
+	/*if(numAggs < 4) {
 		numAggs = regionCenters.len()-1;
-	}
+	}*/
 	local subRegionCount = regionCenters.len()-1;
-	while((j < numAggs)) {// || ((minDistance < 1000) && (j < subRegionCount))) {
+	while((j < numAggs) || ((minDistance < 1000) && (j < subRegionCount))) {
 	//LogManager.Log("j: " + j,4);
 		j += 1;
 		//first we figure out which 2 regions to combine
