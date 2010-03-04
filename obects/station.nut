@@ -3,8 +3,8 @@ class Station {
 		platforms = null;
 		type = null;
 		
-		bus_stops = [];
-		serviced_cities = [];
+		bus_stops = null;
+		serviced_cities = null;
 		
 		enter_tile = null;
 		enter_tile2 = null;

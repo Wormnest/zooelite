@@ -42,17 +42,19 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 	//		Moreover, do we want to check from the city distance or now?
 	//Attempt to find exsisting stations close to the town
 	if(AITown.IsValidTown(townId) && !AIMap.IsValidTile(tileId)) {
-		LogManager.Log("Attempting to get rail station for " + AITown.GetName(townId), 3);
-		local curStations = ZooElite.GetRailStationsForCity(townId);
-		if(curStations.Count() > 0) {
-			LogManager.Log("Reusing existing station #" + curStations.Begin(), 3);
-			town_table[townId].rail_station_id = curStations.Begin();
-			return curStations.Begin();
-		}
 		seed_tile = AITown.GetLocation(townId);
 	} else {
 		seed_tile = tileId;
 	}
+	
+	LogManager.Log("Attempting to get rail station for " + AITown.GetName(townId), 3);
+		local curStations = ZooElite.GetRailStationsForCity(townId);
+		if(curStations.Count() > 0) {
+			LogManager.Log("Reusing existing station #" + curStations.Begin(), 3);
+			town_table[townId].rail_station_id = curStations.Begin();
+			LinkTileToTown(station_table[curStations.Begin()].bus_stops[0], townId);
+			return curStations.Begin();
+		}
 	
 	//TODO: SHould this be a constant? Should it be computed? Raised slowly?
 	local searchRadius = 15;
@@ -258,6 +260,11 @@ function CostToLevelRectangle(tileId, square_x, square_y) {
 //Big nasty function to build a big regional station
 //Regional stations do not have bus stops and are non-terminus stations
 function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
+
+	//Create the object to store data on
+	local this_station = Station();
+	this_station.platforms = platforms;
+	
 	//TODO: Shift might be easy to build in so we'll keep it for now
 	local left_bot_bool = 1;
 	local right_bot_bool = 1;
@@ -298,9 +305,14 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 		stationId = AIStation.GetStationID(top_left_tile);
 		
 		
+		
 		//Build hookups and signals for each side
 			local exit_tile = GetTileRelative(top_left_tile, left_bot_bool * platforms - left_bot_bool, -platforms - 1);
 			local entry_tile = GetTileRelative(exit_tile, Neg1Bool(left_bot_bool), 0);
+			this_station.enter_tile = entry_tile;
+			this_station.enter_tile2 = GetTileRelative(entry_tile, 0, 1);
+			this_station.exit_tile = exit_tile;
+			this_station.exit_tile2 = GetTileRelative(exit_tile, 0, 1);
 			
 			//Build Entry and exit tiles
 			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NW_SE);
@@ -336,7 +348,8 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 		//Build Second side
 			local entry_tile = GetTileRelative(top_right_tile, right_bot_bool * platforms - right_bot_bool, platforms);
 			local exit_tile = GetTileRelative(entry_tile, Neg1Bool(right_bot_bool), 0);
-			
+			//this_station.enter_tile2 = entry_tile;
+			//this_station.exit_tile2 = exit_tile;
 			
 			//Build Entry/Exit Tracks
 			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NW_SE);
@@ -387,6 +400,8 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 		//Build hookups and signals for each side
 			local exit_tile = GetTileRelative(top_left_tile, -platforms - 1, left_bot_bool * platforms - left_bot_bool);
 			local entry_tile = GetTileRelative(exit_tile, 0, Neg1Bool(left_bot_bool));
+			this_station.enter_tile = entry_tile;
+			this_station.exit_tile = exit_tile;
 			
 			//Build Entry and exit tiles
 			Sign(exit_tile, "Exit Tile");
@@ -428,6 +443,8 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 		//Build Second side
 			local entry_tile = GetTileRelative(top_right_tile, platforms, right_bot_bool * platforms - right_bot_bool);
 			local exit_tile = GetTileRelative(entry_tile, 0, Neg1Bool(right_bot_bool));
+			this_station.enter_tile2 = entry_tile;
+			this_station.exit_tile2 = exit_tile;
 			
 			
 			//Build Entry/Exit Tracks
@@ -465,6 +482,8 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 				AIRail.BuildSignal(GetTileRelative(entry_tile, -platforms, Neg1Bool(right_bot_bool) * i), GetTileRelative(entry_tile, -platforms - 1, Neg1Bool(right_bot_bool) * i), AIRail.SIGNALTYPE_PBS);
 			}
 	}
+	this_station.stationId = stationId
+	station_table[stationId] <- this_station;
 	return stationId;
 	
 }
@@ -496,6 +515,8 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 	//Create the object to store data on
 	local this_station = Station();
 	this_station.platforms = platforms;
+	this_station.bus_stops = [];
+	this_station.serviced_cities = [];
 
 	//Let's level it quick
 	local width = RAIL_STATION_PLATFORM_LENGTH + (2 * platforms);
@@ -841,8 +862,30 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 	
 }
 
-
-
+//Build a station in a base region (connect all towns in region to it with busses)
+function BuildBaseStation(towns, top_left_tile, is_terminus, horz, shift) {
+	local built = 0;
+	local baseStation;
+	
+	foreach(town in towns) {
+	//haven't built station yet
+		if (built == 0) {
+			//need to figure out directioning later
+			local center_tile = AIMap.GetTileIndex(AIMap.GetMapSizeX() / 2, AIMap.GetMapSizeY() / 2);
+			baseStation = BuildRailStationForTown(town, top_left_tile, center_tile, towns.Count(), 1);
+			LogManager.Log("the baseStation id is: " + baseStation, 4);
+			built = 1;
+			//LogManager.Log("built base train stations");
+		}
+		else {
+			LogManager.Log("attempting to connect to base station " + baseStation, 4);
+			LinkTileToTown(station_table[baseStation].bus_stops[0], town);
+			town_table[town].rail_station_id = baseStation;
+			station_table[baseStation].serviced_cities.push(town);
+			LogManager.Log("connected", 4);
+		}
+	}
+}
 //Check if this tile could be valid...valid means that the tile must be buildable and ALL tiles around it must be too
 //TODO: Note that in the future we could ease this restriction
 function ZooElite::GetBuildableTilesAround(tileid) {
