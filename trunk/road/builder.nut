@@ -137,7 +137,7 @@ function ZooElite::BuildDepotForTown(townId) {
 			}
 		}
 	}
-	LogManager.Log("Unable to find depot placement for " + AITown.GetName(townId));
+	LogManager.Log("Unable to find depot placement for " + AITown.GetName(townId), 4);
 	return false;
 }
 
@@ -167,7 +167,7 @@ function ZooElite::LinkTileToTown(tileId, townId) {
   
   if (path == null) {
 	/* No path was found. */
-	AILog.Error("pathfinder.FindPath return null", 4);
+	AILog.Error("pathfinder.FindPath return null");
   }
   	
 	/* If a path was found, build a road over it. */

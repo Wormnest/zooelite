@@ -26,6 +26,7 @@ require("rail/tracks.nut");
 require("obects/town.nut");
 require("obects/station.nut");
 
+
 function ZooElite::Start() {
 	this.Sleep(1);
 	LogManager.Log("Starting up!", 3);
@@ -75,7 +76,6 @@ function ZooElite::Start() {
 	towns.Valuate(AITown.GetPopulation);
 	//towns.RemoveAboveValue(500);
 	towns.Sort(AIAbstractList.SORT_BY_VALUE, false);
-	//RoutePlanner.getRegionalStations();
 	local center_tile = AIMap.GetTileIndex(AIMap.GetMapSizeX() / 2, AIMap.GetMapSizeY() / 2);
 	foreach(town, townIndex in towns) {
 		//TODO: Initalize Towns
@@ -86,6 +86,8 @@ function ZooElite::Start() {
 		town_table[town] <- this_town;
 	}	
 	
+		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
+		RoutePlanner.buildNetwork();
 	
 		local town = towns.Begin();
 		local town2 = towns.Next();
