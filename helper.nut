@@ -193,9 +193,9 @@ function SquareRoot(num)
  * @param txt Text message to be displayed
  * @return a valid signID if its allowed by game setting
 */
-function Sign(tile, txt)
+function Sign(tile, txt) 
 {
-    if (!ZooElite.GetSetting("debug_signs")) {
+    if (ZooElite.GetSetting("debug_signs")) {
     	if (typeof txt != "string") txt = txt.tostring();
     	return AISign.BuildSign(tile, txt);
     }

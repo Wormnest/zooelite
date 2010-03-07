@@ -12,6 +12,7 @@ City Rail Station Placement Finder
 Regional Rail Station Placement Finder
 ------------------------
 -Mostly ok suffers from many of the same issues as above
+-Where do we put the bus stops? Do we care about rail expandability?
 
 City Bus Station Placer
 ------------------------

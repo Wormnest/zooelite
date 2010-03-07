@@ -9,3 +9,4 @@ const RAIL_STATION_SEARCH_CARGO_WEIGHT = 2; //Larger gives more weight to the st
 const BUS_RADIUS_MULTIPLIER = 1.4; //Multiplier * sqrrt of houses in town gives search radius. Raise to allow more deviation from a square configuration, but longer search times
 const CITY_BUS_CAPACITY_THRESHOLD = 0.6; //If the transported cargo falls under this percent of production, more busses will be created
 const CITY_BUS_CAPACITY_TARGET = 0.8; //Should be higher than threshold...target pct to rebalance to when checking busses
+const DOWN_TRACK_SPACE = 2; //Length tracks must be able to run from station (Minus 1)

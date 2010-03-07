@@ -142,7 +142,7 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 		if(result > -1) {
 			result += RAIL_STATION_SEARCH_DISTANCE_WEIGHT * AITile.GetBuildCost(AITile.BT_TERRAFORM) 
 							* AIMap.DistanceManhattan(GetTileRelative(tileId, Floor(square_y / 2), Floor(square_x / 2)), seed_tile);
-			result -= AITile.GetBuildCost(AITile.BT_TERRAFORM) * RAIL_STATION_SEARCH_CARGO_WEIGHT * AITile.GetCargoProduction(GetTileRelative(tileId, Floor(square_x / 2), Floor(square_y / 2)), GetPassengerCargoID(), 4, 4, 3);
+			result -= AITile.GetBuildCost(AITile.BT_TERRAFORM) * RAIL_STATION_SEARCH_CARGO_WEIGHT * AITile.GetCargoProduction(GetTileRelative(tileId, Floor(square_x / 2), Floor(square_y / 2)), GetPassengerCargoID(), 4, 4, 4);
 			//Sign(tileId, result);
 		}
 		tilelist.SetValue(tileId, result);
@@ -154,7 +154,7 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 		if(result > -1) {
 			result += RAIL_STATION_SEARCH_DISTANCE_WEIGHT * AITile.GetBuildCost(AITile.BT_TERRAFORM) 
 							* AIMap.DistanceManhattan(GetTileRelative(tileId, Floor(square_x / 2), Floor(square_y / 2)), seed_tile);
-			result -= AITile.GetBuildCost(AITile.BT_TERRAFORM) * RAIL_STATION_SEARCH_CARGO_WEIGHT * AITile.GetCargoProduction(GetTileRelative(tileId, Floor(square_x / 2), Floor(square_y / 2)), GetPassengerCargoID(), 4, 4, 3);
+			result -= AITile.GetBuildCost(AITile.BT_TERRAFORM) * RAIL_STATION_SEARCH_CARGO_WEIGHT * AITile.GetCargoProduction(GetTileRelative(tileId, Floor(square_x / 2), Floor(square_y / 2)), GetPassengerCargoID(), 4, 4, 4);
 			//Sign(tileId, result);
 		}
 		
@@ -171,32 +171,155 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 	
 	//TODO: ADD A FUNCTION TO GENERATE A SCORING METRIC
 	//Evaluate each, and choose the best plot to build on
-	local vert_propisiton = verticletilelist.Begin();
-	local horz_propisiton = tilelist.Begin();
+	//local vert_propisiton = verticletilelist.Begin();
+	//local horz_propisiton = tilelist.Begin();
 	LogManager.Log("Found " + verticletilelist.Count() + " " + tilelist.Count() + " locations for " +  AITown.GetName(townId), 4);
-	local top_left_tile = null;
-	local horizontal = true;
-	local swap = true;
-	if(verticletilelist.GetValue(vert_propisiton) < tilelist.GetValue(horz_propisiton)) {
-		top_left_tile = vert_propisiton;
-		horizontal = false;
-	} else {
-		top_left_tile = horz_propisiton;
-	}
-	if(horizontal) {
-		if(AIMap.DistanceManhattan(top_left_tile, direction_of_tileId) > AIMap.DistanceManhattan(GetTileRelative(top_left_tile, square_y, square_x), direction_of_tileId))
-			swap = false;
-	} else {
-		if(AIMap.DistanceManhattan(top_left_tile, direction_of_tileId) > AIMap.DistanceManhattan(GetTileRelative(top_left_tile, square_x, square_y), direction_of_tileId))
-			swap = false;
-	}
 	
-	//Attempt to build it by sending it to another function!
-	if(!is_terminus)
-		return BuildRegionalStation(top_left_tile, platforms, horizontal, swap);
-	return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, swap);
-		
 	
+	//The below routines run through different possible station orientations and configurations to find the most viable one
+	
+	if(is_terminus) {
+		while(verticletilelist.Count() > 0 && tilelist.Count() > 0) {
+			local top_left_tile = null;
+			local horizontal = true;
+			local swap = true;
+			local vert_propisiton = verticletilelist.Begin();
+			local horz_propisiton = tilelist.Begin();
+			if(verticletilelist.GetValue(vert_propisiton) < tilelist.GetValue(horz_propisiton)) {
+				top_left_tile = vert_propisiton;
+				horizontal = false;
+			} else {
+				top_left_tile = horz_propisiton;
+			}
+			if(horizontal) {
+				local spot2 = GetTileRelative(top_left_tile, square_y, square_x);
+				local spot1 = GetTileRelative(top_left_tile, 0, 0);
+				if(canBuildRectangleAtCorner(spot1, 1, -DOWN_TRACK_SPACE) && 
+					AIMap.DistanceManhattan(spot1, direction_of_tileId) < AIMap.DistanceManhattan(spot2, direction_of_tileId)) {
+						return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);						
+				} else if(canBuildRectangleAtCorner(spot2, -1, DOWN_TRACK_SPACE) && 
+					AIMap.DistanceManhattan(spot2, direction_of_tileId) < AIMap.DistanceManhattan(spot1, direction_of_tileId)) {
+						return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
+				} else {
+					tilelist.RemoveTop(1);
+				}
+			} else {
+				local spot2 = GetTileRelative(top_left_tile, square_x, 0);
+				local spot1 = GetTileRelative(top_left_tile, 0, square_y);
+				if(canBuildRectangleAtCorner(spot1, -DOWN_TRACK_SPACE, -1) && 
+						AIMap.DistanceManhattan(spot1, direction_of_tileId) < AIMap.DistanceManhattan(spot2, direction_of_tileId)) {
+							
+					return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);				
+				} else if(canBuildRectangleAtCorner(spot2, DOWN_TRACK_SPACE, 1) && 
+						AIMap.DistanceManhattan(spot2, direction_of_tileId) < AIMap.DistanceManhattan(spot1, direction_of_tileId)) {
+					return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
+				} else {
+					verticletilelist.RemoveTop(1);
+				}
+			}
+			
+		}
+		//Run through for through-stations...little more difficult
+	} else {
+		while(verticletilelist.Count() > 0 && tilelist.Count() > 0) {
+			local top_left_tile = null;
+			local horizontal = true;
+			local swap = true;
+			local vert_propisiton = verticletilelist.Begin();
+			local horz_propisiton = tilelist.Begin();
+			local left_bot_bool = null;
+			local right_bot_bool = null;
+			if(verticletilelist.GetValue(vert_propisiton) < tilelist.GetValue(horz_propisiton)) {
+				top_left_tile = vert_propisiton;
+				horizontal = false;
+			} else {
+				top_left_tile = horz_propisiton;
+			}
+			if(horizontal) {
+				//1   --PPPPPPP--    3
+				//   /--PPPPPPP--\
+				//2-/---PPPPPPP---\--4
+				// -/---PPPPPPP----\-
+				local spot1 = top_left_tile;
+				local spot2 = GetTileRelative(top_left_tile, platforms - 2, 0);				
+				local spot3 = GetTileRelative(top_left_tile, 0, square_x + 1);
+				local spot4 = GetTileRelative(spot3, platforms - 2, 0);		
+				local left_bot_bool = null;
+				local right_bot_bool = null;
+				if(canBuildRectangleAtCorner(spot1, 1, -DOWN_TRACK_SPACE) && canBuildRectangleAtCorner(spot2, 1, -DOWN_TRACK_SPACE)) {
+					if(AIMap.DistanceManhattan(spot1, direction_of_tileId) < AIMap.DistanceManhattan(spot2, direction_of_tileId)) {
+						left_bot_bool = 0;
+					} else {
+						left_bot_bool = 1;
+					}
+				} else if(canBuildRectangleAtCorner(spot1, 1, -DOWN_TRACK_SPACE)) {
+					left_bot_bool = 0;
+				} else if(canBuildRectangleAtCorner(spot2, 1, -DOWN_TRACK_SPACE)) {
+					left_bot_bool = 1;
+				} else {
+					tilelist.RemoveTop(1);
+					continue;
+				}
+				if(canBuildRectangleAtCorner(spot3, 1, DOWN_TRACK_SPACE) && canBuildRectangleAtCorner(spot4, 1, DOWN_TRACK_SPACE)) {
+					if(AIMap.DistanceManhattan(spot3, direction_of_tileId) < AIMap.DistanceManhattan(spot4, direction_of_tileId)) {
+						right_bot_bool = 0;
+					} else {
+						right_bot_bool = 1;
+					}
+				} else if(canBuildRectangleAtCorner(spot3, 1, DOWN_TRACK_SPACE)) {
+					right_bot_bool = 0;
+				} else if(canBuildRectangleAtCorner(spot4, 1, DOWN_TRACK_SPACE)) {
+					right_bot_bool = 1;
+				} else {
+					tilelist.RemoveTop(1);
+					continue;
+				}
+				return BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);							
+
+			} else {
+				//vertical
+				local spot1 = top_left_tile;
+				local spot2 = GetTileRelative(top_left_tile, 0, platforms - 2);				
+				local spot3 = GetTileRelative(top_left_tile, square_x + 1, 0);
+				local spot4 = GetTileRelative(spot3, 0, platforms - 2);	
+				
+				if(canBuildRectangleAtCorner(spot1, -DOWN_TRACK_SPACE, 1) && canBuildRectangleAtCorner(spot2, -DOWN_TRACK_SPACE, 1)) {
+					if(AIMap.DistanceManhattan(spot1, direction_of_tileId) < AIMap.DistanceManhattan(spot2, direction_of_tileId)) {
+						left_bot_bool = 0;
+					} else {
+						left_bot_bool = 1;
+					}
+				} else if(canBuildRectangleAtCorner(spot1, -DOWN_TRACK_SPACE, 1)) {
+					left_bot_bool = 0;
+				} else if(canBuildRectangleAtCorner(spot2, -DOWN_TRACK_SPACE, 1)) {
+					left_bot_bool = 1;
+				} else {
+					tilelist.RemoveTop(1);
+					continue;
+				}
+				if(canBuildRectangleAtCorner(spot3, DOWN_TRACK_SPACE, 1) && canBuildRectangleAtCorner(spot4, DOWN_TRACK_SPACE, 1)) {
+					if(AIMap.DistanceManhattan(spot3, direction_of_tileId) < AIMap.DistanceManhattan(spot4, direction_of_tileId)) {
+						right_bot_bool = 0;
+					} else {
+						right_bot_bool = 1;
+					}
+				} else if(canBuildRectangleAtCorner(spot3, DOWN_TRACK_SPACE, 1)) {
+					right_bot_bool = 0;
+				} else if(canBuildRectangleAtCorner(spot4, DOWN_TRACK_SPACE, 1)) {
+					right_bot_bool = 1;
+				} else {
+					tilelist.RemoveTop(1);
+					continue;
+				}
+				return BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);
+				
+				return BuildRegionalStation(top_left_tile, platforms, horizontal, false, 1, 1);						
+
+			}
+			return BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);
+			
+		}
+	}
 		
 	/*
 	//Lastly, asess the tiles in the order of closest to in direct line OR COST TO LEVEL
@@ -247,7 +370,7 @@ function CostToLevelRectangle(tileId, square_x, square_y) {
 		tiles.Valuate(AITile.GetSlope);
 		tiles.KeepValue(0);
 		if(tiles.Count() == prev_count)
-			return 0;
+			return 1;
 		if(!AITile.LevelTiles(tileId, GetTileRelative(tileId, square_x, square_y)))
 			return -1;
 
@@ -259,15 +382,11 @@ function CostToLevelRectangle(tileId, square_x, square_y) {
 
 //Big nasty function to build a big regional station
 //Regional stations do not have bus stops and are non-terminus stations
-function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
+function BuildRegionalStation(top_left_tile, platforms, horz, shift, left_bot_bool, right_bot_bool) {
 
 	//Create the object to store data on
 	local this_station = Station();
 	this_station.platforms = platforms;
-	
-	//TODO: Shift might be easy to build in so we'll keep it for now
-	local left_bot_bool = 1;
-	local right_bot_bool = 1;
 	
 	local is_terminus = false;
 	local width = RAIL_STATION_PLATFORM_LENGTH + 2 * (platforms + 1);
@@ -309,10 +428,12 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 		//Build hookups and signals for each side
 			local exit_tile = GetTileRelative(top_left_tile, left_bot_bool * platforms - left_bot_bool, -platforms - 1);
 			local entry_tile = GetTileRelative(exit_tile, Neg1Bool(left_bot_bool), 0);
-			this_station.enter_tile = entry_tile;
-			this_station.enter_tile2 = GetTileRelative(entry_tile, 0, 1);
-			this_station.exit_tile = exit_tile;
-			this_station.exit_tile2 = GetTileRelative(exit_tile, 0, 1);
+			
+			//This is intentional
+			this_station.exit_tile = entry_tile;
+			this_station.exit_tile2 = GetTileRelative(entry_tile, 0, -1);
+			this_station.enter_tile = exit_tile;
+			this_station.enter_tile2 = GetTileRelative(exit_tile, 0, -1);
 			
 			//Build Entry and exit tiles
 			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NW_SE);
@@ -348,8 +469,10 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 		//Build Second side
 			local entry_tile = GetTileRelative(top_right_tile, right_bot_bool * platforms - right_bot_bool, platforms);
 			local exit_tile = GetTileRelative(entry_tile, Neg1Bool(right_bot_bool), 0);
-			//this_station.enter_tile2 = entry_tile;
-			//this_station.exit_tile2 = exit_tile;
+			this_station.enter2_tile = entry_tile;
+			this_station.enter2_tile2 = GetTileRelative(entry_tile, 0, 1);
+			this_station.exit2_tile = exit_tile;
+			this_station.exit2_tile2 = GetTileRelative(exit_tile, 0, 1);
 			
 			//Build Entry/Exit Tracks
 			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NW_SE);
@@ -401,7 +524,9 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 			local exit_tile = GetTileRelative(top_left_tile, -platforms - 1, left_bot_bool * platforms - left_bot_bool);
 			local entry_tile = GetTileRelative(exit_tile, 0, Neg1Bool(left_bot_bool));
 			this_station.enter_tile = entry_tile;
+			this_station.enter_tile2 = GetTileRelative(entry_tile, -1, 0);
 			this_station.exit_tile = exit_tile;
+			this_station.exit_tile2 = GetTileRelative(exit_tile, -1, 0);
 			
 			//Build Entry and exit tiles
 			Sign(exit_tile, "Exit Tile");
@@ -443,8 +568,10 @@ function BuildRegionalStation(top_left_tile, platforms, horz, shift) {
 		//Build Second side
 			local entry_tile = GetTileRelative(top_right_tile, platforms, right_bot_bool * platforms - right_bot_bool);
 			local exit_tile = GetTileRelative(entry_tile, 0, Neg1Bool(right_bot_bool));
-			this_station.enter_tile2 = entry_tile;
-			this_station.exit_tile2 = exit_tile;
+			this_station.enter2_tile = entry_tile;
+			this_station.enter2_tile2 = GetTileRelative(entry_tile, 1, 0);
+			this_station.exit2_tile = exit_tile;
+			this_station.exit2_tile2 = GetTileRelative(exit_tile, 1, 0);
 			
 			
 			//Build Entry/Exit Tracks
@@ -515,8 +642,6 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 	//Create the object to store data on
 	local this_station = Station();
 	this_station.platforms = platforms;
-	this_station.bus_stops = [];
-	this_station.serviced_cities = [];
 
 	//Let's level it quick
 	local width = RAIL_STATION_PLATFORM_LENGTH + (2 * platforms);
@@ -619,16 +744,16 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 			local active_tile = GetTileRelative(start_tile, 0, i);
 			local front_tile  = GetTileRelative(start_tile, -1, i);
 			if(build_tile) {
-				success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
-				AIRoad.BuildRoad(active_tile, front_tile);
+				//success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
+				//AIRoad.BuildRoad(active_tile, front_tile);
 				build_tile = false;
+				this_station.bus_front_tiles.push(front_tile);
 				this_station.bus_stops.push(active_tile);
 			} else {
 				build_tile = true;
 			}
-			AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, -1, i + 1));
+			//AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, -1, i + 1));
 		}
-		ZooElite.LinkTileToTown(start_tile, townId);
 		this_station.serviced_cities.push(townId);
 		
 	} else if (horz && shift) {
@@ -692,16 +817,16 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 			local active_tile = GetTileRelative(start_tile, 0, -i);
 			local front_tile  = GetTileRelative(start_tile, 1, -i);
 			if(build_tile) {
-				success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
-				AIRoad.BuildRoad(active_tile, front_tile);
+				//success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
+				//AIRoad.BuildRoad(active_tile, front_tile);
 				build_tile = false;
+				this_station.bus_front_tiles.push(front_tile);
 				this_station.bus_stops.push(active_tile);
 			} else {
 				build_tile = true;
 			}
-			AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, 1, -i - 1));
+			//AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, 1, -i - 1));
 		}
-		ZooElite.LinkTileToTown(start_tile, townId);
 		
 		this_station.exit_tile = exit_tile;
 		this_station.enter_tile = entry_tile;
@@ -765,16 +890,16 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 			local active_tile = GetTileRelative(start_tile, i, 0);
 			local front_tile  = GetTileRelative(start_tile, i, 1);
 			if(build_tile) {
-				success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
-				AIRoad.BuildRoad(active_tile, front_tile);
+				//success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
+				//AIRoad.BuildRoad(active_tile, front_tile);
 				build_tile = false;
+				this_station.bus_front_tiles.push(front_tile);
 				this_station.bus_stops.push(active_tile);
 			} else {
 				build_tile = true;
 			}
-			AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, i + 1, 1));
+			//AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, i + 1, 1));
 		}
-		ZooElite.LinkTileToTown(start_tile, townId);
 		
 		this_station.exit_tile = exit_tile;
 		this_station.enter_tile = entry_tile;
@@ -837,14 +962,15 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 			local active_tile = GetTileRelative(start_tile, -i, 0);
 			local front_tile  = GetTileRelative(start_tile, -i, -1);
 			if(build_tile) {
-				success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
-				AIRoad.BuildRoad(active_tile, front_tile);
+				//success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
+				//AIRoad.BuildRoad(active_tile, front_tile);
+				this_station.bus_front_tiles.push(front_tile);
 				build_tile = false;
 				this_station.bus_stops.push(active_tile);
 			} else {
 				build_tile = true;
 			}
-			AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, -i - 1, -1));
+			//AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, -i - 1, -1));
 		}
 		this_station.exit_tile = exit_tile;
 		this_station.enter_tile = entry_tile;
@@ -852,8 +978,6 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 		this_station.enter_tile2 = GetTileRelative(entry_tile, -1, 0);
 		this_station.stationId = stationId;
 		this_station.serviced_cities.push(townId);
-		
-		ZooElite.LinkTileToTown(start_tile, townId);
 	}
 	
 	station_table[stationId] <- this_station;
