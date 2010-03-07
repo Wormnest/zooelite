@@ -141,10 +141,24 @@ function ZooElite::BuildDepotForTown(townId) {
 	return false;
 }
 
-//Links the given tile to the given town's road grid
-//returns NOTHING
-function ZooElite::LinkTileToTown(tileId, townId) {
-	local town_loc = AITown.GetLocation(townId);
+//Make sure all the stations are optimally connected
+function ZooElite::EnhanceRoadConnectionsInTown(townId) {
+	local station_list = ZooElite.GetBusStationsInCity(townId);
+	foreach(idx, station in station_list) {
+		local tile1 = AIStation.GetFrontTile(station);
+		foreach(idx, station2 in station_list) {
+			if(station2 > station1) {
+				local tile2 = AIStation.GetFrontTile(station2);
+				ZooElite.LinkTileToTile(tile1, tile2);
+			}
+		}
+	}
+}
+
+//Links the given tile to the other given tile (Usually another town or station)
+//returns false on failure - true on successful building.
+function ZooElite::LinkTileToTile(tileId, tileId2) {
+	//local town_loc = AITown.GetLocation(townId);
 	//Holder Function for rail builder
 	/* Create an instance of the pathfinder. */
 	local pathfinder = RoadPathFinder();
@@ -155,19 +169,20 @@ function ZooElite::LinkTileToTown(tileId, townId) {
 	//TODO: Add some Intelligence to figure out if we can afford things based on available cash / master plan
 	pathfinder.cost.tunnel_per_tile = 200;
 	LogManager.Log("Pathing Stations", 2);
-	pathfinder.InitializePath([tileId], [town_loc]);
+	pathfinder.InitializePath([tileId], [tileId2]);
 
 	/* Try to find a path. */
   local path = false;
   while (path == false) {
 	path = pathfinder.FindPath(100);
-	this.Sleep(1);
+	ZooElite.Sleep(1);
   }
 
   
   if (path == null) {
 	/* No path was found. */
 	AILog.Error("pathfinder.FindPath return null");
+	return false;
   }
   	
 	/* If a path was found, build a road over it. */
@@ -204,4 +219,5 @@ function ZooElite::LinkTileToTown(tileId, townId) {
 		path = par;
 	}
 	LogManager.Log("Pathing Done!", 2);
+	return true;
 }

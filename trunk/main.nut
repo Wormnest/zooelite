@@ -87,22 +87,45 @@ function ZooElite::Start() {
 	}	
 	
 		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
-		RoutePlanner.buildNetwork();
+		//RoutePlanner.buildNetwork();
 	
 		local town = towns.Begin();
 		local town2 = towns.Next();
 		
-		//Inputs: near town, search from tileId, in_direction_of_tile, platforms, is_terminus(True: Cities, False:regional)
-		local station1 = ZooElite.BuildRailStationForTown(town, 0, center_tile, 3, true);
-		local station2 = ZooElite.BuildRailStationForTown(town2, 0, center_tile, 3, true);
 		
-		//Connect the two stations using rails...actually works more or less...
-		ZooElite.ConnectStations(station1, station2);
-		ZooElite.ConnectStations(station2, station1);
+		
+		//Inputs: near town, search from tileId, in_direction_of_tile, platforms, is_terminus(True: Cities, False:regional)
+		local station1 = ZooElite.BuildRailStationForTown(town, 0, center_tile, 3, false);
+		station_table[station1].signStation();
+		local station2 = ZooElite.BuildRailStationForTown(town2, 0, center_tile, 3, false);
+		
+		/*
+		//Build bus stations for each and connect to towns
+		if(station1) {
+			station_table[station1].buildBusStops();
+			station_table[station1].connectStopsToTown(town);
+		}
+		if(station2) {
+			station_table[station2].buildBusStops();
+			station_table[station2].connectStopsToTown(town2);
+		}
+		
+		if(station1 && station2) {
+			//Connect the two stations using rails...actually works more or less...
+			ZooElite.ConnectStations(station1, station2);
+			ZooElite.ConnectStations(station2, station1);
+		}
+		*/ 
+		
+		/*
 		
 		//First build a center station, then additional ones...more efficent
 		ZooElite.BuildMaxBusStationsInTown(town, 1);
 		ZooElite.BuildMaxBusStationsInTown(town, 0);
+		
+		//TODO: Check this function with API
+		//ZooElite.EnhanceRoadConnectionsInTown(town);
+		
 		//Add Depot
 		ZooElite.BuildDepotForTown(town);
 		//Add Buses
@@ -117,6 +140,8 @@ function ZooElite::Start() {
 		ZooElite.BuildDepotForTown(town2);
 		ZooElite.AdjustBusesInTown(town2);
 		//ZooElite.UpdateBusRoutesForTown(town2);
+		
+		*/
 		
 		ClearSigns();
 		

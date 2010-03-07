@@ -6,4 +6,4 @@ class Town {
 	constructor() {
 		
 	}
-}
+} 
