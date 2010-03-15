@@ -19,34 +19,196 @@ require("obects/station.nut");
 
 
 class RoutePlanner	{
+routes = [];
 };
 
 //starts the recursive region building process
 function RoutePlanner::buildNetwork() {
 
 	local towns = AITownList();
-	local townArray = [];
-	foreach(town in towns) {
-		townArray.append(town);
-	}
-	RoutePlanner.buildRegions(towns);
+	RoutePlanner.getBaseRegions(towns);
 	
+	//each base region in list has 4 parameters:
+	//0 - center, 1- towns, 2 - stationid, 3 - built?
+	
+	local routes = RoutePlanner.getMinSpanningRoutes();
+	
+	foreach(route in routes) {
+		if(base_regions[route[0]][3] == 0) {
+			ZooElite.BuildBaseStation(base_regions[route[0]][1], base_regions[route[0]][0], 1, 0, 0);
+			base_regions[route[0]][3] == 1;
+		}
+		if(base_regions[route[1]][3] == 0) {
+			ZooElite.BuildBaseStation(base_regions[route[1]][1], base_regions[route[1]][0], 1, 0, 0);
+			base_regions[route[1]][3] == 1;
+		}
+	}		
+
+	
+}
+
+//this will take a map full of towns and determine small "base regions -> each to be serviced by a single train station 
+//connected to the towns with roads
+//returns an array of arrays
+//each base region holds: center of region, towns in region, whether or not it has been built, and the regional station id (null if not build yet or failed)
+function RoutePlanner::getBaseRegions(towns) {
+
+	//will hold region's locations (centers and towns in each region
+	local regions;
+
+	//will hold centers of regions
+	local regionCenters = array(towns.Count());
+	
+	//will hold towns in each base region
+	local bucketList = array(towns.Count(), null);
+	
+	//initialize buckets
+	for(local i = 0; i < towns.Count(); i += 1) {
+		bucketList[i] = AIList();
+	}
+
+	//now really initialize the buckets and the region centers
+	local i = 0;
+	foreach(town, townIndex in towns) {
+		bucketList[i].AddItem(town, town);
+		regionCenters[i] = AITown.GetLocation(town);
+		i += 1;
+	}
+	
+	//if we have only one town in this region
+	if(regionCenters.len() == 1) {
+		base_regions.push([regionCenters[0], bucketList[0], null, 0]);
+	}
+
+	//run through agglomeration until the regions we are creating are too big
+	
+	local aggRegion1 = 0;
+	local aggRegion2 = 1;
+	local minDistance = AIMap.DistanceSquare(regionCenters[0], regionCenters[1]);
+	for(local r = 0; r < regionCenters.len()-1; r += 1)	{
+		for(local c = r+1; c < regionCenters.len(); c += 1) {
+				
+			local newDistance = AIMap.DistanceSquare(regionCenters[r], regionCenters[c]);
+			if(newDistance < minDistance) {
+				minDistance = newDistance;
+				aggRegion1 = r;
+				aggRegion2 = c;
+			}	
+		}	
+	}
+	
+	while(minDistance < 2000) {
+		LogManager.Log("the regions to aggregate are: " + aggRegion1 + " , " + aggRegion2, 4);
+	
+		//now we need to actually aggregate these regions:
+		//we will copy everything into a new bucketlist with 1 less element
+		local newBucketList = array(bucketList.len() - 1, null);
+		//initialize buckets
+		for(local i = 0; i < newBucketList.len(); i += 1) {
+			newBucketList[i] = AIList();
+		}
+		
+		//add regions to bucketList with towns from Region1 and Region2 going into the same bucket
+		local j = 1;
+		for(local i = 0; i < bucketList.len(); i += 1) {
+			if(i == aggRegion1 || i == aggRegion2) {
+				foreach(town in bucketList[i]) {
+					newBucketList[0].AddItem(town, town);
+				}
+			}
+			else {
+				foreach(town in bucketList[i]) {
+					newBucketList[j].AddItem(town, town);
+				}
+				j += 1;
+			}
+		}
+		
+		//now recalculate the region centers
+		local newRegionCenters = array(newBucketList.len(), null);
+		
+		for(local i = 0; i < newRegionCenters.len(); i += 1) {
+			local xSum = 0;
+			local ySum = 0;
+			local numTowns = 0;
+
+			//sum x and y coordinates of all towns in region
+			foreach(town in newBucketList[i]) {
+				xSum += AIMap.GetTileX(AITown.GetLocation(town));
+				ySum += AIMap.GetTileY(AITown.GetLocation(town));
+				numTowns += 1;
+			}
+		
+			//averages
+			local xAvg = xSum / numTowns;
+			local yAvg = ySum / numTowns;
+			//LogManager.Log("region " + i + " has " + numTowns + " towns", 4);
+			//LogManager.Log("region " + i + " has " + xSum + " xSum", 4);
+			//LogManager.Log("region " + i + " has " + ySum + " ySum", 4);
+		
+			//LogManager.Log("region " + i + "now at center: " + xAvg + ", " + yAvg, 4);
+			//set region to average x and y value:
+			newRegionCenters[i] = AIMap.GetTileIndex(xAvg, yAvg);
+		}
+		
+		bucketList = newBucketList;
+		regionCenters = newRegionCenters;
+
+		//now calculate the next 2 regions to aggregate
+		//first we figure out which 2 regions to combine
+		aggRegion1 = 0;
+		aggRegion2 = 1;
+		minDistance = AIMap.DistanceSquare(regionCenters[aggRegion1], regionCenters[aggRegion2]);
+		for(local r = 0; r < regionCenters.len()-1; r += 1)	{
+			for(local c = r+1; c < regionCenters.len(); c += 1) {
+				
+				local newDistance = AIMap.DistanceSquare(regionCenters[r], regionCenters[c]);
+				if(newDistance < minDistance) {
+					minDistance = newDistance;
+					aggRegion1 = r;
+					aggRegion2 = c;
+				}	
+			}	
+		}	
+	}
+	
+	RoutePlanner.addBaseRegions([regionCenters, bucketList]);
+	return 0;
 }
 
 //the main function that is called recursively to build regions on a set of towns
 //starts with all the towns in the map - eventually gets down to small regions and builds bus routes.
-function RoutePlanner::buildRegions(towns) {
+function buildRegion(towns, townsCenter) {
 	
-	local regions = RoutePlanner.aggCluster(towns);
-	local stations = array(regions[0].len(), 0);
+	//find the center of the region where we will build the regional station
+	local regionCenter = townsCenter;
 	
-	if(regions[0].len() == 1) {
-		RoutePlanner.buildBaseRegion(regions);
+	//no we cluster the towns into smaller regions. The number of smaller regions will determine the number of platforms at the station.
+	local subRegions = RoutePlanner.aggCluster(towns);
+	local numSubRegions = subRegions[0].len();
+	
+	
+	//our region is minimally sized
+	if(numSubRegions == 1) {
+		LogManager.Log("Adding BaseRegion with center: " + regionCenter, 4);
+		RoutePlanner.addBaseRegion(subRegions);
 		return 0;
 	}
 	
+	//otherwise we recursively build the subregions and connect them to the regional station that we build
+	
+	//first we build the regional station
+	//BuildRegionalStation(regionCenter, numSubRegions, 0, 0, 0, 0);
+	
+	//now we scroll through subregions, recursively building and connecting
+	local i = 0;
+	foreach(region in subRegions) {
+		buildRegion(subRegions[1][i], subRegions[0][i]);
+		i += 1;
+	}
+	
 	//mark the regions and build statoins so we know whats going on (towns.len() gives us some sense of what level of map this region is part of)
-	for(local i = 0; i < regions[0].len(); i += 1) {
+	/*for(local i = 0; i < regions[0].len(); i += 1) {
 	
 			Sign(regions[0][i], towns.Count() + "Region " + i);
 			//build station at town closest to center of region
@@ -59,20 +221,18 @@ function RoutePlanner::buildRegions(towns) {
 					minDistance = newMin;
 				}
 			}
-			//stations[i] = BuildRailStationForTown(city, AITown.GetLocation(city), regions[0][i], 4, 0);
 		}
 	
 	local regionalRoutes;
 	
 	//now we get the list of regional routes - each route is defined by a pair of regions
 	regionalRoutes = RoutePlanner.getTopRoutes(regions);
-	
-	
+	*/
 	//now "build" routes just to get a sense of stuff (right now we just mark routes)
 	//before building a route call the function recursively on the regions it connects
 	
 	//mark which subregions we have already built
-	local alreadyBuilt = array(regions[0].len(), 0);
+	/*local alreadyBuilt = array(regions[0].len(), 0);
 	for(local j = 0; j < regionalRoutes.len(); j += 1) {
 		local route = regionalRoutes[j];
 		//TODO:how do we pass/refer to regions. bucketList???
@@ -84,7 +244,7 @@ function RoutePlanner::buildRegions(towns) {
 			RoutePlanner.buildRegions(regions[1][route[1]]);
 			alreadyBuilt[route[1]] = 1;
 		}
-		
+		*/
 		/*//now we want to connect 2 given regions by the towns closest to their centers
 		local city0;
 		local city1;
@@ -117,7 +277,7 @@ function RoutePlanner::buildRegions(towns) {
 		//local Yinc =  AIMap.GetTileY(AITown.GetLocation(city0)) - AIMap.GetTileY(AITown.GetLocation(city1));
 		//LogManager.Log("Yinc: " + Yinc,3);
 		//local Xinc =  AIMap.GetTileX(AITown.GetLocation(city0)) - AIMap.GetTileX(AITown.GetLocation(city1));
-		local Xinc =  ((AIMap.GetTileX(regions[0][route[0]]) - AIMap.GetTileX(regions[0][route[1]])));
+		/*local Xinc =  ((AIMap.GetTileX(regions[0][route[0]]) - AIMap.GetTileX(regions[0][route[1]])));
 		local Yinc =  ((AIMap.GetTileY(regions[0][route[0]]) - AIMap.GetTileY(regions[0][route[1]])));
 
 		local curY = 20*AIMap.GetTileY(regions[0][route[1]]);
@@ -128,9 +288,9 @@ function RoutePlanner::buildRegions(towns) {
 			curX += Xinc;
 		}
 	}
+	*/
 	
-	
-	return regions;
+	return 0;//regions;
 	
 }
 
@@ -401,6 +561,7 @@ function RoutePlanner::aggCluster(towns) {
 	return regions;
 }
 
+
 //draws regions closer to nearby regions
 function RoutePlanner::regionBalance(regions, regionalRoutes) {
 
@@ -468,18 +629,14 @@ function RoutePlanner::adjustRegions(regions) {
 
 //will create a minimum spanning tree covering all towns passed in
 
-function RoutePlanner::getMinSpanningRoutes(towns) {
+function RoutePlanner::getMinSpanningRoutes() {
 	//for each region pair - measure approx. cost (distance?, test mode? water check and shit?)
 	//run kruskal's or similar algoritm
 	
 	//list of all possible regional routes
-	local possibleRoutes = array(towns.Count()*(towns.Count()-1)/2, null);
+	local possibleRoutes = array(base_regions.len()*(base_regions.len()-1)/2, null);
 	
-	local townArray = [];
-	foreach(town in towns) {
-		townArray.append(town);
-	}
-	//LogManager.Log("posroutes len: " + possibleRoutes.len(), 4);
+	
 	
 	for(local i = 0; i < possibleRoutes.len(); i += 1) {
 		possibleRoutes[i] = array(3, null);
@@ -487,11 +644,11 @@ function RoutePlanner::getMinSpanningRoutes(towns) {
 	
 						
 	local c = 0;
-	for(local i = 0; i < townArray.len(); i += 1) {
-		for(local j = i + 1; j < townArray.len(); j += 1) {
+	for(local i = 0; i < base_regions.len(); i += 1) {
+		for(local j = i + 1; j < base_regions.len(); j += 1) {
 			possibleRoutes[c][0] = i;
 			possibleRoutes[c][1] = j;
-			possibleRoutes[c][2] = SquareRoot(AIMap.DistanceSquare(AITown.GetLocation(townArray[i]), AITown.GetLocation(townArray[j])));
+			possibleRoutes[c][2] = SquareRoot(AIMap.DistanceSquare(base_regions[i][0], base_regions[j][0]));
 			c += 1;
 		}
 	}
@@ -504,13 +661,13 @@ function RoutePlanner::getMinSpanningRoutes(towns) {
 	
 	//now run algorithm.
 	local regionalRoutes = [];
-	local clusters = array(townArray.len(), null);
+	local clusters = array(base_regions.len(), null);
 	for(local i = 0; i < clusters.len(); i += 1) {
 		clusters[i] = i;
 	}
 	for(local i = 0; i < possibleRoutes.len(); i += 1) {
 		if(clusters[possibleRoutes[i][0]] != clusters[possibleRoutes[i][1]]) {
-			regionalRoutes.append([townArray[possibleRoutes[i][0]], townArray[possibleRoutes[i][1]], possibleRoutes[i][2]]);
+			regionalRoutes.append([possibleRoutes[i][0], possibleRoutes[i][1], possibleRoutes[i][2]]);
 			local newClusterNum = clusters[possibleRoutes[i][1]];
 			local oldClusterNum = clusters[possibleRoutes[i][0]];
 			for(local j = 0; j < clusters.len(); j += 1) {
@@ -519,30 +676,22 @@ function RoutePlanner::getMinSpanningRoutes(towns) {
 				}
 			}
 		}
-		/*foreach(cluster in clusters) {
-			LogManager.Log("cluster: " + cluster, 4);
-		}
-			LogManager.Log("YYYYYYYYYYYYYYYYYYYYY", 4);*/
 	}
 	
 	foreach(route in regionalRoutes) {
 		LogManager.Log("route from: " + route[0] + " to " + route[1] + " with length: " + route[2], 4);
-	}
-	
-	/*for(local j = 0; j < regionalRoutes.len(); j += 1) {
-		local route = regionalRoutes[j];
-		local Yinc =  (AIMap.GetTileY(regions[0][route[0]]) - AIMap.GetTileY(regions[0][route[1]]))/10;
-		//LogManager.Log("Yinc: " + Yinc,4);
-		local Xinc =  (AIMap.GetTileX(regions[0][route[0]]) - AIMap.GetTileX(regions[0][route[1]]))/10;
-		local curY = AIMap.GetTileY(regions[0][route[1]]);
-		local curX = AIMap.GetTileX(regions[0][route[1]]);
-		for(local i = 0; i < 11; i += 1) {
-			Sign(AIMap.GetTileIndex(curX, curY), "R" + j);
+		
+		local Xinc =  AIMap.GetTileX(base_regions[route[0]][0]) - AIMap.GetTileX(base_regions[route[1]][0]);
+		local Yinc =  AIMap.GetTileY(base_regions[route[0]][0]) - AIMap.GetTileY(base_regions[route[1]][0]);
+
+		local curY = 20*AIMap.GetTileY(base_regions[route[1]][0]);
+		local curX = 20*AIMap.GetTileX(base_regions[route[1]][0]);
+		for(local i = 0; i < 21; i += 1) {
+			Sign(AIMap.GetTileIndex(curX/20, curY/20), "R");
 			curY += Yinc;
 			curX += Xinc;
 		}
-	}*/
-	
+	}
 	return regionalRoutes;
 }
 
@@ -769,31 +918,15 @@ function RoutePlanner::findMinPath(region1, region2, regionalRoutes, clusters) {
 	return minPath;
 }
 
-function RoutePlanner::buildBaseRegion(regions) {
-	LogManager.Log("BASE REGION", 4);
-	Sign(regions[0][0], "BASE");
-	/*local minSpanRoutes = RoutePlanner.getMinSpanningRoutes(regions[1][0]);
-	foreach(route in minSpanRoutes) {
-		LogManager.Log("BASE ROUTE", 4);
-		local Yinc =  AIMap.GetTileY(AITown.GetLocation(route[0])) - AIMap.GetTileY(AITown.GetLocation(route[1]));
-		//LogManager.Log("Yinc: " + Yinc,3);
-		local Xinc =  AIMap.GetTileX(AITown.GetLocation(route[0])) - AIMap.GetTileX(AITown.GetLocation(route[1]));
-		//local Xinc =  ((AIMap.GetTileX(AITown.GetLocation(town))) - AIMap.GetTileX(regions[0][0]));
-		local curY = 20*AIMap.GetTileY(AITown.GetLocation(route[1]));
-		local curX = 20*AIMap.GetTileX(AITown.GetLocation(route[1]));
+function RoutePlanner::addBaseRegions(regions) {
+
+	for(local i = 0; i < regions[0].len(); i += 1) {
+		LogManager.Log("BASE REGION", 4);
+		Sign(regions[0][i], "BASE REGION");
+		//ZooElite.BuildBaseStation(regions[1][i], regions[0][i], 1, 0, 0);
 	
-		
-		
-		
-		for(local i = 0; i < 21; i += 1) {
-			Sign(AIMap.GetTileIndex(curX/20, curY/20), "BASE");
-			curY += Yinc;
-			curX += Xinc;
-		}
-	}*/
-	
-	//local baseStation = BuildTrainStation(regions[0][0], 3, false, 1);
-	BuildBaseStation(regions[1][0], regions[0][0], 1, 0, 0);
+		base_regions.push([regions[0][i], regions[1][i], null, 0]);
+	}
 }
 
 function route_compare(a,b)

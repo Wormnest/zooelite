@@ -6,21 +6,24 @@ class Station {
 		bus_built = false;
 		
 		
-		bus_stops = [];
-		bus_front_tiles = [];
-		serviced_cities = [];
+		bus_stops = null;
+		bus_front_tiles = null;
+		serviced_cities = null;
 		
 		enter_tile = null;
 		enter_tile2 = null;
 		
 		exit_tile = null;
 		exit_tile2 = null;
+		//exit_part;
 		
 		enter2_tile = null;
 		enter2_tile2 = null;
 		
 		exit2_tile = null;
 		exit2_tile2 = null;
+		
+		station_dir = null;
 		
 	constructor() {
 		
@@ -46,11 +49,11 @@ class Station {
 	function signStation() {
 		Sign(this.enter_tile, "Enter11");
 		Sign(this.enter_tile2, "Enter12");
-		Sign(this.enter2_tile, "Enter21");
-		Sign(this.enter2_tile2, "Enter22");
+		//Sign(this.enter2_tile, "Enter21");
+		//Sign(this.enter2_tile2, "Enter22");
 		Sign(this.exit_tile, "Exit11");
 		Sign(this.exit_tile2, "Exit12");
-		Sign(this.exit2_tile, "Exit21");
-		Sign(this.exit2_tile2, "Exit22");
+		//Sign(this.exit2_tile, "Exit21");
+		//Sign(this.exit2_tile2, "Exit22");
 	}
 }

@@ -195,10 +195,10 @@ function SquareRoot(num)
 */
 function Sign(tile, txt) 
 {
-    if (ZooElite.GetSetting("debug_signs")) {
+   //if (ZooElite.GetSetting("debug_signs")) {
     	if (typeof txt != "string") txt = txt.tostring();
     	return AISign.BuildSign(tile, txt);
-    }
+   // }
 }
 
 /**

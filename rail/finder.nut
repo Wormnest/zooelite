@@ -48,13 +48,13 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 	}
 	
 	LogManager.Log("Attempting to get rail station for " + AITown.GetName(townId), 3);
-		local curStations = ZooElite.GetRailStationsForCity(townId);
+	/*	local curStations = ZooElite.GetRailStationsForCity(townId);
 		if(curStations.Count() > 0) {
 			LogManager.Log("Reusing existing station #" + curStations.Begin(), 3);
 			town_table[townId].rail_station_id = curStations.Begin();
 			LinkTileToTown(station_table[curStations.Begin()].bus_stops[0], townId);
 			return curStations.Begin();
-		}
+		}*/
 	
 	//TODO: SHould this be a constant? Should it be computed? Raised slowly?
 	local searchRadius = 15;
@@ -196,10 +196,10 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 				local spot1 = GetTileRelative(top_left_tile, 0, 0);
 				if(canBuildRectangleAtCorner(spot1, 1, -DOWN_TRACK_SPACE) && 
 					AIMap.DistanceManhattan(spot1, direction_of_tileId) < AIMap.DistanceManhattan(spot2, direction_of_tileId)) {
-						return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);						
+						return ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);						
 				} else if(canBuildRectangleAtCorner(spot2, -1, DOWN_TRACK_SPACE) && 
 					AIMap.DistanceManhattan(spot2, direction_of_tileId) < AIMap.DistanceManhattan(spot1, direction_of_tileId)) {
-						return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
+						return ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
 				} else {
 					tilelist.RemoveTop(1);
 				}
@@ -209,10 +209,10 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 				if(canBuildRectangleAtCorner(spot1, -DOWN_TRACK_SPACE, -1) && 
 						AIMap.DistanceManhattan(spot1, direction_of_tileId) < AIMap.DistanceManhattan(spot2, direction_of_tileId)) {
 							
-					return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);				
+					return ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);				
 				} else if(canBuildRectangleAtCorner(spot2, DOWN_TRACK_SPACE, 1) && 
 						AIMap.DistanceManhattan(spot2, direction_of_tileId) < AIMap.DistanceManhattan(spot1, direction_of_tileId)) {
-					return BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
+					return ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
 				} else {
 					verticletilelist.RemoveTop(1);
 				}
@@ -311,12 +311,12 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 					tilelist.RemoveTop(1);
 					continue;
 				}
-				return BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);
+				return ZooElite.BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);
 				
-				return BuildRegionalStation(top_left_tile, platforms, horizontal, false, 1, 1);						
+				return ZooElite.BuildRegionalStation(top_left_tile, platforms, horizontal, false, 1, 1);						
 
 			}
-			return BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);
+			return ZooElite.BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);
 			
 		}
 	}
@@ -382,7 +382,7 @@ function CostToLevelRectangle(tileId, square_x, square_y) {
 
 //Big nasty function to build a big regional station
 //Regional stations do not have bus stops and are non-terminus stations
-function BuildRegionalStation(top_left_tile, platforms, horz, shift, left_bot_bool, right_bot_bool) {
+function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, left_bot_bool, right_bot_bool) {
 
 	//Create the object to store data on
 	local this_station = Station();
@@ -638,10 +638,14 @@ function Pos1Bool(aBool) {
 
 //Build normal city train station.
 //This is a terminus which will have bus stops attached to townId
-function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, shift) {
+function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, shift) {
+	local dtp = ai_instance.dtp;
 	//Create the object to store data on
 	local this_station = Station();
 	this_station.platforms = platforms;
+	this_station.bus_stops = [];
+	this_station.bus_front_tiles = [];
+	this_station.serviced_cities = [];
 
 	//Let's level it quick
 	local width = RAIL_STATION_PLATFORM_LENGTH + (2 * platforms);
@@ -678,6 +682,7 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 	
 	if(horz && !shift) {
 		LogManager.Log("Building normal, horizontal configuration", 4);
+		this_station.station_dir = dtp.SN_LINE;
 		//We shift the actual tile so that we have room for the bus stations
 		top_left_tile = GetTileRelative(top_left_tile, 2, 0);
 		
@@ -758,6 +763,7 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 		
 	} else if (horz && shift) {
 		LogManager.Log("Building flipped, horizontal configuration", 4);
+		this_station.station_dir = dtp.NS_LINE;
 		//This is tough because we literally want to spin the entire station 180 degrees
 		local bot_right = GetTileRelative(top_left_tile, width, height);
 		
@@ -837,6 +843,7 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 		
 	} else if(!horz && !shift) {
 		LogManager.Log("Building normal, vertical configuration", 4);
+		this_station.station_dir = dtp.WE_LINE;
 		local bot_right = GetTileRelative(top_left_tile, width, height);
 		local success = AIRail.BuildRailStation(GetTileRelative(top_left_tile, 2, 1), AIRail.RAILTRACK_NE_SW, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 		if(!success)
@@ -910,6 +917,7 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 		
 	} else if(!horz && shift) {
 		LogManager.Log("Building flipped, vertical configuration", 4);
+		this_station.station_dir = dtp.EW_LINE;
 		local bot_right = GetTileRelative(top_left_tile, width, height);
 		local success = AIRail.BuildRailStation(GetTileRelative(bot_right, -1 * RAIL_STATION_PLATFORM_LENGTH - 1, -1 * platforms), AIRail.RAILTRACK_NE_SW, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 		if(!success)
@@ -987,7 +995,7 @@ function BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horz, 
 }
 
 //Build a station in a base region (connect all towns in region to it with busses)
-function BuildBaseStation(towns, top_left_tile, is_terminus, horz, shift) {
+function ZooElite::BuildBaseStation(towns, top_left_tile, is_terminus, horz, shift) {
 	local built = 0;
 	local baseStation;
 	
@@ -996,19 +1004,40 @@ function BuildBaseStation(towns, top_left_tile, is_terminus, horz, shift) {
 		if (built == 0) {
 			//need to figure out directioning later
 			local center_tile = AIMap.GetTileIndex(AIMap.GetMapSizeX() / 2, AIMap.GetMapSizeY() / 2);
-			baseStation = BuildRailStationForTown(town, top_left_tile, center_tile, towns.Count(), 1);
+			baseStation = ZooElite.BuildRailStationForTown(town, top_left_tile, center_tile, towns.Count(), 1);
+			if(baseStation == false) {
+				LogManager.Log("Station Failed!", 4);
+				break;
+			}
+			station_table[baseStation].buildBusStops();
+			station_table[baseStation].connectStopsToTown(town)
+			town_table[town].rail_station_id = baseStation;
+			station_table[baseStation].serviced_cities.push(town);
 			LogManager.Log("the baseStation id is: " + baseStation, 4);
 			built = 1;
-			//LogManager.Log("built base train stations");
+			
+			/*ZooElite.BuildMaxBusStationsInTown(town, 1);
+			ZooElite.BuildMaxBusStationsInTown(town, 0);
+			ZooElite.BuildDepotForTown(town);
+			ZooElite.AdjustBusesInTown(town);*/
+			//ZooElite.UpdateBusRoutesForTown(town);
 		}
 		else {
 			LogManager.Log("attempting to connect to base station " + baseStation, 4);
-			LinkTileToTown(station_table[baseStation].bus_stops[0], town);
+			station_table[baseStation].connectStopsToTown(town)
 			town_table[town].rail_station_id = baseStation;
+			station_table[baseStation].buildBusStops();
 			station_table[baseStation].serviced_cities.push(town);
 			LogManager.Log("connected", 4);
+			
+			/*ZooElite.BuildMaxBusStationsInTown(town, 1);
+			ZooElite.BuildMaxBusStationsInTown(town, 0);
+			ZooElite.BuildDepotForTown(town);
+			ZooElite.AdjustBusesInTown(town);*/
+			//ZooElite.UpdateBusRoutesForTown(town);
 		}
 	}
+return baseStation;
 }
 //Check if this tile could be valid...valid means that the tile must be buildable and ALL tiles around it must be too
 //TODO: Note that in the future we could ease this restriction
