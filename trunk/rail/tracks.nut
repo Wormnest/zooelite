@@ -1,12 +1,27 @@
 //tracks.nut
 function ZooElite::ConnectStations(stationId1, stationId2) {
 	LogManager.Log("Connecting Stations: " + stationId1 + " and " + stationId2, 4);
+	
+	ClearSigns();
+	//station_table[stationId1].signStation();
+	//station_table[stationId2].signStation();
+
+		dtp = ai_instance.dtp;
+			/* Create the action to build the railroad. */
+			//a little sketchy on why the getoppositepart thing is used. might not be neccesary. still need to work on this.
+				local drrb = DoubleRailroadBuilder(station_table[stationId2].exit_tile,
+				station_table[stationId1].enter_tile, station_table[stationId2].station_dir, 
+				dtp.GetOppositePart(station_table[stationId1].station_dir));
+				
+				drrb.BuildTrack();
+				
 	//I have no idea how this is supposed to work, but we're going to try it
 	//Holder Function for rail builder
+
 	/* Create an instance of the pathfinder. */
-	local pathfinder = RailPathFinder();
+	//local pathfinder = RailPathFinder();
 	/* Set the cost for making a turn high. */
-	
+/*	
 	local from_tile = station_table[stationId1].exit_tile;
 	local from_tile2 = station_table[stationId1].exit_tile2;
 	local to_tile = station_table[stationId2].enter_tile;
@@ -23,7 +38,7 @@ function ZooElite::ConnectStations(stationId1, stationId2) {
 	
 
 	/* Try to find a path. */
-  local path = false;
+ /* local path = false;
   while (path == false) {
 	path = pathfinder.FindPath(-1);
 	this.Sleep(1);
@@ -32,7 +47,7 @@ function ZooElite::ConnectStations(stationId1, stationId2) {
   
   if (path == null) {
 	/* No path was found. */
-	LogManager.Log("pathfinder.FindPath return null", 5);
+/*	LogManager.Log("pathfinder.FindPath return null", 5);
 	return false;
   }
   	
@@ -62,6 +77,7 @@ function ZooElite::ConnectStations(stationId1, stationId2) {
 	    path = path.GetParent();
 	  }
 	}
+	*/
 
 	LogManager.Log("Pathing Done!", 2);
 }

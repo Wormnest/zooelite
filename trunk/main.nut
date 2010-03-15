@@ -9,12 +9,39 @@ require("constants.nut");
 require("helper.nut");
 require("RoutePlanner.nut");
 
+//trAIns shit
+require("rail/aystar.nut");
+require("rail/double_railroad_builder.nut");
+require("rail/double_railroad_depot_builder.nut");
+require("rail/double_railroad_junction_builder.nut");
+require("rail/double_railroad_station_builder.nut");
+require("rail/industry_usage.nut");
+require("rail/railroad_common.nut");
+require("rail/railroad_double_track_parts.nut");
+require("rail/railroad_manager.nut");
+
+require("util/binary_heap.nut");
+require("util/binary_tree.nut");
+require("util/direction.nut");
+require("util/hash_table.nut");
+require("util/math.nut");
+require("util/pair.nut");
+require("util/tile.nut");
+
+/* Global: */
+ai_instance <- null;
 
 class ZooElite extends AIController {
 	function Start();
 	town_table = {};
 	station_table = {};
+	base_regions = [];
+	dtp = null
 	
+	constructor(){
+		ai_instance = this;
+		dtp = DoubleTrackParts();
+	}
 }
 
 require("road/road.nut");
@@ -25,7 +52,6 @@ require("rail/finder.nut");
 require("rail/tracks.nut");
 require("obects/town.nut");
 require("obects/station.nut");
-
 
 function ZooElite::Start() {
 	this.Sleep(1);
@@ -87,6 +113,7 @@ function ZooElite::Start() {
 	}	
 	
 		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
+		//local route_planner = RoutePlanner();
 		//RoutePlanner.buildNetwork();
 	
 		local town = towns.Begin();
@@ -95,9 +122,11 @@ function ZooElite::Start() {
 		
 		
 		//Inputs: near town, search from tileId, in_direction_of_tile, platforms, is_terminus(True: Cities, False:regional)
-		local station1 = ZooElite.BuildRailStationForTown(town, 0, center_tile, 3, false);
+		local station1 = ZooElite.BuildRailStationForTown(town, 0, center_tile, 3, true);
 		station_table[station1].signStation();
-		local station2 = ZooElite.BuildRailStationForTown(town2, 0, center_tile, 3, false);
+		local station2 = ZooElite.BuildRailStationForTown(town2, 0, center_tile, 3, true);
+		//hopefully using trAins pathfinder
+		ZooElite.ConnectStations(station1, station2);
 		
 		/*
 		//Build bus stations for each and connect to towns
@@ -143,7 +172,7 @@ function ZooElite::Start() {
 		
 		*/
 		
-		ClearSigns();
+		//ClearSigns();
 		
 	while(true) {
 		
