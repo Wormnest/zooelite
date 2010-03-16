@@ -381,12 +381,15 @@ function CostToLevelRectangle(tileId, square_x, square_y) {
 }
 
 //Big nasty function to build a big regional station
-//Regional stations do not have bus stops and are non-terminus stations
+//Regional stations MAY have bus stops. Because they can serve as base stations.
 function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, left_bot_bool, right_bot_bool) {
 
 	//Create the object to store data on
 	local this_station = Station();
 	this_station.platforms = platforms;
+	
+	this_station.bus_stops = [];
+	this_station.bus_front_tiles = [];
 	
 	local is_terminus = false;
 	local width = RAIL_STATION_PLATFORM_LENGTH + 2 * (platforms + 1);
@@ -409,7 +412,11 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 	AIRail.SetCurrentRailType(types.Begin());
 	local stationId = 0;
 	if(horz) {
-		LogManager.Log("Building regional, horizontal configuration", 3);
+		LogManager.Log("Building regional, horizontal configuration", 4);
+		
+		//two directions since it is none terminus
+		this_station.station_dir = [dtp.NS_LINE, dtp.SN_LINE];
+		
 		//We shift the actual tile so that we have room for rails on both sides
 		top_left_tile = GetTileRelative(top_left_tile, 0, platforms + 1);
 		local top_right_tile = GetTileRelative(top_left_tile, 0, RAIL_STATION_PLATFORM_LENGTH);
@@ -504,9 +511,29 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 				AIRail.BuildRailTrack(GetTileRelative(entry_tile, Neg1Bool(right_bot_bool) * i, -platforms), AIRail.RAILTRACK_NW_SE);
 				AIRail.BuildSignal(GetTileRelative(entry_tile, Neg1Bool(right_bot_bool) * i, -platforms), GetTileRelative(entry_tile, Neg1Bool(right_bot_bool) * i, -platforms - 1), AIRail.SIGNALTYPE_PBS);
 			}
+		
+		//bus stop locations just incase we use this as a base station.	
+		local build_tile = true;
+		local start_tile = GetTileRelative(top_left_tile, -1, 0);
+		for(local i = 0; i < RAIL_STATION_PLATFORM_LENGTH; i++) {
+			local active_tile = GetTileRelative(start_tile, 0, i);
+			local front_tile  = GetTileRelative(start_tile, -1, i);
+			if(build_tile) {
+				//success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
+				//AIRoad.BuildRoad(active_tile, front_tile);
+				build_tile = false;
+				this_station.bus_front_tiles.push(front_tile);
+				this_station.bus_stops.push(active_tile);
+			} else {
+				build_tile = true;
+			}
+			//AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, -1, i + 1));
+		}
 			
 	} else {
-		LogManager.Log("Building regional, vertical configuration", 3);
+		LogManager.Log("Building regional, vertical configuration", 4);
+		//two directions since it is none terminus
+		this_station.station_dir = [dtp.EW_LINE, dtp.WE_LINE];
 		//We shift the actual tile so that we have room for rails on both sides
 		top_left_tile = GetTileRelative(top_left_tile, platforms + 1, 0);
 		local top_right_tile = GetTileRelative(top_left_tile, RAIL_STATION_PLATFORM_LENGTH, 0);
@@ -540,6 +567,9 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 				AIRail.BuildSignal(exit_tile, GetTileRelative(exit_tile, -1, 0), AIRail.SIGNALTYPE_PBS_ONEWAY);
 			}
 			
+			//bus stop locations just incase we use this as a base station.	
+			local build_tile = true;
+			local start_tile = GetTileRelative(top_left_tile, -1, 2);
 			for(local i = 1; i < platforms; i++) {
 				AIRail.BuildRailTrack(GetTileRelative(exit_tile, 1 * i, 0), AIRail.RAILTRACK_NE_SW);
 				AIRail.BuildRailTrack(GetTileRelative(entry_tile, 1 * i, 0), AIRail.RAILTRACK_NE_SW);
@@ -608,6 +638,24 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 				AIRail.BuildRailTrack(GetTileRelative(entry_tile, -platforms, Neg1Bool(right_bot_bool) * i), AIRail.RAILTRACK_NE_SW);
 				AIRail.BuildSignal(GetTileRelative(entry_tile, -platforms, Neg1Bool(right_bot_bool) * i), GetTileRelative(entry_tile, -platforms - 1, Neg1Bool(right_bot_bool) * i), AIRail.SIGNALTYPE_PBS);
 			}
+		
+		//in case we want bus stops
+		local build_tile = true;
+		local start_tile = GetTileRelative(top_left_tile, 1, platforms);
+		for(local i = 0; i < RAIL_STATION_PLATFORM_LENGTH; i++) {
+			local active_tile = GetTileRelative(start_tile, i, 0);
+			local front_tile  = GetTileRelative(start_tile, i, 1);
+			if(build_tile) {
+				//success = AIRoad.BuildRoadStation(active_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, stationId);
+				//AIRoad.BuildRoad(active_tile, front_tile);
+				build_tile = false;
+				this_station.bus_front_tiles.push(front_tile);
+				this_station.bus_stops.push(active_tile);
+			} else {
+				build_tile = true;
+			}
+			//AIRoad.BuildRoad(front_tile, GetTileRelative(start_tile, i + 1, 1));
+		}
 	}
 	this_station.stationId = stationId
 	station_table[stationId] <- this_station;
@@ -682,7 +730,7 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 	
 	if(horz && !shift) {
 		LogManager.Log("Building normal, horizontal configuration", 4);
-		this_station.station_dir = dtp.SN_LINE;
+		this_station.station_dir = [dtp.SN_LINE];
 		//We shift the actual tile so that we have room for the bus stations
 		top_left_tile = GetTileRelative(top_left_tile, 2, 0);
 		
@@ -763,7 +811,7 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 		
 	} else if (horz && shift) {
 		LogManager.Log("Building flipped, horizontal configuration", 4);
-		this_station.station_dir = dtp.NS_LINE;
+		this_station.station_dir = [dtp.NS_LINE];
 		//This is tough because we literally want to spin the entire station 180 degrees
 		local bot_right = GetTileRelative(top_left_tile, width, height);
 		
@@ -843,7 +891,7 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 		
 	} else if(!horz && !shift) {
 		LogManager.Log("Building normal, vertical configuration", 4);
-		this_station.station_dir = dtp.WE_LINE;
+		this_station.station_dir = [dtp.WE_LINE];
 		local bot_right = GetTileRelative(top_left_tile, width, height);
 		local success = AIRail.BuildRailStation(GetTileRelative(top_left_tile, 2, 1), AIRail.RAILTRACK_NE_SW, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 		if(!success)
@@ -917,7 +965,7 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 		
 	} else if(!horz && shift) {
 		LogManager.Log("Building flipped, vertical configuration", 4);
-		this_station.station_dir = dtp.EW_LINE;
+		this_station.station_dir = [dtp.EW_LINE];
 		local bot_right = GetTileRelative(top_left_tile, width, height);
 		local success = AIRail.BuildRailStation(GetTileRelative(bot_right, -1 * RAIL_STATION_PLATFORM_LENGTH - 1, -1 * platforms), AIRail.RAILTRACK_NE_SW, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 		if(!success)
@@ -1004,7 +1052,7 @@ function ZooElite::BuildBaseStation(towns, top_left_tile, is_terminus, horz, shi
 		if (built == 0) {
 			//need to figure out directioning later
 			local center_tile = AIMap.GetTileIndex(AIMap.GetMapSizeX() / 2, AIMap.GetMapSizeY() / 2);
-			baseStation = ZooElite.BuildRailStationForTown(town, top_left_tile, center_tile, towns.Count(), 1);
+			baseStation = ZooElite.BuildRailStationForTown(town, top_left_tile, center_tile, towns.Count(), is_terminus);
 			if(baseStation == false) {
 				LogManager.Log("Station Failed!", 4);
 				break;
