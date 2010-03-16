@@ -126,7 +126,7 @@ function ZooElite::Start() {
 		//station_table[station1].buildBusStops();
 		local station2 = ZooElite.BuildRailStationForTown(town2, 0, center_tile, 3, false);
 		//hopefully using trAins pathfinder
-		ZooElite.ConnectStations(station1, station2);
+		ZooElite.ConnectStations(station2, station1);
 		
 		/*
 		//Build bus stations for each and connect to towns
