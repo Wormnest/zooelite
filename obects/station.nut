@@ -23,7 +23,10 @@ class Station {
 		exit2_tile = null;
 		exit2_tile2 = null;
 		
+		//used for the trAins path finder
 		station_dir = null;
+		//says whether the station has been incorperated into the grid yet.
+		route_connected = false;
 		
 	constructor() {
 		
