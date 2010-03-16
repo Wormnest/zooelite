@@ -1,4 +1,6 @@
 //tracks.nut
+//require("util/direction.nut");
+
 function ZooElite::ConnectStations(stationId1, stationId2) {
 	LogManager.Log("Connecting Stations: " + stationId1 + " and " + stationId2, 4);
 	
@@ -65,16 +67,29 @@ function ZooElite::ConnectStations(stationId1, stationId2) {
 			
 			//now choose the proper tiles to path to: (remember REGIONAL station)
 			if(station_table[stationId2].station_dir[dirIndex2] == dtp.SN_LINE) {
-				station2_tile = station_table[stationId2].exit2_tile;
+				LogManager.Log("SN_LINE", 4);
+				local exitside = station_table[stationId2].exit2_tile;
+				local enterside = station_table[stationId2].enter2_tile;
+				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.EAST) station2_tile = enterside;
+				else station2_tile = exitside;				
 			}
 			else if (station_table[stationId2].station_dir[dirIndex2] == dtp.NS_LINE) {
-				station2_tile = GetTileRelative(station_table[stationId2].enter_tile, 0, 1);
+				local exitside = GetTileRelative(station_table[stationId2].exit_tile, 0, 1);
+				local enterside = GetTileRelative(station_table[stationId2].enter_tile, 0, 1);
+				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.EAST) station2_tile = enterside;
+				else station2_tile = exitside;
 			}
 			else if (station_table[stationId2].station_dir[dirIndex2] == dtp.WE_LINE) {
-				station2_tile = station_table[stationId2].exit2_tile;
+				local exitside = station_table[stationId2].exit2_tile;
+				local enterside = station_table[stationId2].enter2_tile;
+				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.NORTH) station2_tile = enterside;
+				else station2_tile = exitside;
 			}
 			else if (station_table[stationId2].station_dir[dirIndex2] == dtp.EW_LINE) {
-				station2_tile = GetTileRelative(station_table[stationId2].enter_tile, 1, 0);
+				local exitside = GetTileRelative(station_table[stationId2].exit_tile, 1, 0);
+				local enterside = GetTileRelative(station_table[stationId2].enter_tile, 1, 0);
+				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.NORTH) station2_tile = enterside;
+				else station2_tile = exitside;
 			}
 		}
 		
@@ -128,16 +143,29 @@ function ZooElite::ConnectStations(stationId1, stationId2) {
 			
 			//no choose pathing tile. (Remember: this is NONTERIMAL station going TO IT)
 			if(station_table[stationId1].station_dir[dirIndex1] == dtp.SN_LINE) {
-				station1_tile = station_table[stationId1].enter2_tile2;
+				LogManager.Log("SN_LINE", 4);
+				local exitside = station_table[stationId1].exit2_tile2;
+				local enterside = station_table[stationId1].enter2_tile2;
+				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.EAST) station1_tile = enterside;
+				else station1_tile = exitside;
 			}
 			else if (station_table[stationId1].station_dir[dirIndex1] == dtp.NS_LINE) {
-				station1_tile = station_table[stationId1].exit_tile;
+				local exitside = station_table[stationId1].exit_tile;
+				local enterside = station_table[stationId1].enter_tile;
+				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.EAST) station1_tile = enterside;
+				else station1_tile = exitside;
 			}	
 			else if (station_table[stationId1].station_dir[dirIndex1] == dtp.WE_LINE) {
-				station1_tile = station_table[stationId1].exit2_tile2;
+				local exitside = station_table[stationId1].exit2_tile2;
+				local enterside = station_table[stationId1].enter2_tile2;
+				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.NORTH) station1_tile = enterside;
+				else station1_tile = exitside;
 			}
 			else if (station_table[stationId1].station_dir[dirIndex1] == dtp.EW_LINE) {
-				station1_tile = station_table[stationId1].enter_tile;
+				local exitside = station_table[stationId1].exit_tile;
+				local enterside = station_table[stationId1].enter_tile;
+				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.NORTH) station1_tile = enterside;
+				else station1_tile = exitside;
 			}
 		}
 		
