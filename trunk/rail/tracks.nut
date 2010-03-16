@@ -7,13 +7,46 @@ function ZooElite::ConnectStations(stationId1, stationId2) {
 	//station_table[stationId2].signStation();
 
 		dtp = ai_instance.dtp;
-			/* Create the action to build the railroad. */
-			//a little sketchy on why the getoppositepart thing is used. might not be neccesary. still need to work on this.
-				local drrb = DoubleRailroadBuilder(station_table[stationId2].exit_tile,
-				station_table[stationId1].enter_tile, station_table[stationId2].station_dir, 
-				dtp.GetOppositePart(station_table[stationId1].station_dir));
+		//a little sketchy on why the getoppositepart thing is used. might not be neccesary. still need to work on this.
+		LogManager.Log("direction of station2 is: " + station_table[stationId2].station_dir, 4);
+		local station1_tile;
+		local station2_tile;
+		
+		//make it connect up right depending on station orientation.
+		if(station_table[stationId2].station_dir == dtp.SN_LINE) {
+			station2_tile = station_table[stationId2].exit_tile;
+		}
+		else if (station_table[stationId2].station_dir == dtp.NS_LINE) {
+			station2_tile = GetTileRelative(station_table[stationId2].enter_tile, 0, 1);
+		}
+		else if (station_table[stationId2].station_dir == dtp.WE_LINE) {
+			station2_tile = station_table[stationId2].enter_tile;
+		}
+		else if (station_table[stationId2].station_dir == dtp.EW_LINE) {
+			station2_tile = GetTileRelative(station_table[stationId2].exit_tile, 1, 0);
+		}
+		
+		
+		if(station_table[stationId1].station_dir == dtp.SN_LINE) {
+			station1_tile = station_table[stationId1].exit_tile2;
+		}
+		else if (station_table[stationId1].station_dir == dtp.NS_LINE) {
+			station1_tile = station_table[stationId1].enter_tile;
+		}
+		else if (station_table[stationId1].station_dir == dtp.WE_LINE) {
+			station1_tile = station_table[stationId1].enter_tile2;
+		}
+		else if (station_table[stationId1].station_dir == dtp.EW_LINE) {
+			station1_tile = station_table[stationId1].exit_tile;
+		}
+		
+		local drrb = DoubleRailroadBuilder(station2_tile, station1_tile, station_table[stationId2].station_dir, 
+											dtp.GetOppositePart(station_table[stationId1].station_dir));
 				
-				drrb.BuildTrack();
+		drrb.BuildTrack();
+		
+		station_table[stationId1].route_connected = true;
+		station_table[stationId2].route_connected = true;
 				
 	//I have no idea how this is supposed to work, but we're going to try it
 	//Holder Function for rail builder
