@@ -114,19 +114,23 @@ function ZooElite::Start() {
 	
 		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
 
-		//RoutePlanner.buildNetwork();
+		RoutePlanner.buildNetwork();
 	
 		local town = towns.Begin();
 		local town2 = towns.Next();
+		local town3 = towns.Next();
 		
 		
 		
 		//Inputs: near town, search from tileId, in_direction_of_tile, platforms, is_terminus(True: Cities, False:regional)
-		local station1 = ZooElite.BuildRailStationForTown(town, 0, center_tile, 3, false);
+		local station1 = ZooElite.BuildRailStationForTown(town, 0, center_tile, 2, false);
 		//station_table[station1].buildBusStops();
-		local station2 = ZooElite.BuildRailStationForTown(town2, 0, center_tile, 3, false);
+		local station2 = ZooElite.BuildRailStationForTown(town2, 0, center_tile, 2, false);
+		local station3 = ZooElite.BuildRailStationForTown(town3, 0, center_tile, 2, false);
 		//hopefully using trAins pathfinder
-		ZooElite.ConnectStations(station2, station1);
+		
+		ZooElite.ConnectStations(station3, station1);
+		ZooElite.ConnectStations(station1, station2);
 		
 		/*
 		//Build bus stations for each and connect to towns
