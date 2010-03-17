@@ -26,7 +26,7 @@ class Station {
 		//used for the trAins path finder
 		station_dir = null;
 		//says whether the station has been incorperated into the grid yet.
-		route_connected = false;
+		routes = null;
 		
 	constructor() {
 		

@@ -402,8 +402,11 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 	local this_station = Station();
 	this_station.platforms = platforms;
 	
+	//in case it is used as a base station
 	this_station.bus_stops = [];
 	this_station.bus_front_tiles = [];
+	this_station.serviced_cities = [];
+	this_station.routes = [null, null];
 	
 	local is_terminus = false;
 	local width = RAIL_STATION_PLATFORM_LENGTH + 2 * (platforms + 1);
@@ -708,6 +711,7 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 	this_station.bus_stops = [];
 	this_station.bus_front_tiles = [];
 	this_station.serviced_cities = [];
+	this_station.routes = [null, null];
 
 	//Let's level it quick
 	local width = RAIL_STATION_PLATFORM_LENGTH + (2 * platforms);
@@ -1056,50 +1060,35 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 	
 }
 
-//Build a station in a base region (connect all towns in region to it with busses)
-function ZooElite::BuildBaseStation(towns, top_left_tile, is_terminus, horz, shift) {
-	local built = 0;
-	local baseStation;
+
+function ZooElite::BuildBaseStation(towns, top_left_tile, is_terminus) {
+	local center_tile = AIMap.GetTileIndex(AIMap.GetMapSizeX() / 2, AIMap.GetMapSizeY() / 2);
+	local baseStation = ZooElite.BuildRailStationForTown(towns.Begin(), top_left_tile, center_tile, towns.Count()+1, is_terminus);
+	return baseStation;
+}
+//Connnect a station to all the towns in a base region with busses
+function ZooElite::ConnectBaseRegion(baseRegion) {
+	local baseStation = baseRegion[2];
+	local towns = baseRegion[1];
 	
+	if(baseStation == false) {
+		LogManager.Log("Base Station Failed!", 4);
+		return false;
+		}
+	
+	local firstIter = true;
 	foreach(town in towns) {
-	//haven't built station yet
-		if (built == 0) {
-			//need to figure out directioning later
-			local center_tile = AIMap.GetTileIndex(AIMap.GetMapSizeX() / 2, AIMap.GetMapSizeY() / 2);
-			baseStation = ZooElite.BuildRailStationForTown(town, top_left_tile, center_tile, towns.Count(), is_terminus);
-			if(baseStation == false) {
-				LogManager.Log("Station Failed!", 4);
-				break;
-			}
+		if(firstIter) {
 			station_table[baseStation].buildBusStops();
-			station_table[baseStation].connectStopsToTown(town)
-			town_table[town].rail_station_id = baseStation;
-			station_table[baseStation].serviced_cities.push(town);
-			LogManager.Log("the baseStation id is: " + baseStation, 4);
-			built = 1;
-			
-			/*ZooElite.BuildMaxBusStationsInTown(town, 1);
-			ZooElite.BuildMaxBusStationsInTown(town, 0);
-			ZooElite.BuildDepotForTown(town);
-			ZooElite.AdjustBusesInTown(town);*/
-			//ZooElite.UpdateBusRoutesForTown(town);
+			firstIter = false;
 		}
-		else {
-			LogManager.Log("attempting to connect to base station " + baseStation, 4);
-			station_table[baseStation].connectStopsToTown(town)
-			town_table[town].rail_station_id = baseStation;
-			station_table[baseStation].buildBusStops();
-			station_table[baseStation].serviced_cities.push(town);
-			LogManager.Log("connected", 4);
-			
-			/*ZooElite.BuildMaxBusStationsInTown(town, 1);
-			ZooElite.BuildMaxBusStationsInTown(town, 0);
-			ZooElite.BuildDepotForTown(town);
-			ZooElite.AdjustBusesInTown(town);*/
-			//ZooElite.UpdateBusRoutesForTown(town);
-		}
+	
+		LogManager.Log("attempting to connect to base station " + baseStation, 4);
+		station_table[baseStation].connectStopsToTown(town)
+		town_table[town].rail_station_id = baseStation;
+		station_table[baseStation].serviced_cities.push(town);		
 	}
-return baseStation;
+	return baseStation;
 }
 //Check if this tile could be valid...valid means that the tile must be buildable and ALL tiles around it must be too
 //TODO: Note that in the future we could ease this restriction

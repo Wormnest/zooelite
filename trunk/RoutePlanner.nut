@@ -37,16 +37,18 @@ function RoutePlanner::buildNetwork() {
 	
 	foreach(route in routes) {
 		if(base_regions[route[0]][3] == 0) {
-			base_regions[route[0]][2] = ZooElite.BuildBaseStation(base_regions[route[0]][1], base_regions[route[0]][0], 0, 0, 0);
+			base_regions[route[0]][2] = ZooElite.BuildBaseStation(base_regions[route[0]][1], base_regions[route[0]][0], 0);
 			base_regions[route[0]][3] = 1;
 		}
 		if(base_regions[route[1]][3] == 0) {
-			base_regions[route[1]][2] = ZooElite.BuildBaseStation(base_regions[route[1]][1], base_regions[route[1]][0], 0, 0, 0);
+			base_regions[route[1]][2] = ZooElite.BuildBaseStation(base_regions[route[1]][1], base_regions[route[1]][0], 0);
 			base_regions[route[1]][3] = 1;
 		}
 		
 		if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
 			ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2]);
+			ZooElite.ConnectBaseRegion(base_regions[route[0]]);
+			ZooElite.ConnectBaseRegion(base_regions[route[1]]);
 		}
 	}		
 
