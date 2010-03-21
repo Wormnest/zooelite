@@ -1,14 +1,14 @@
 //tracks.nut
 //require("util/direction.nut");
 
-function ZooElite::ConnectStations(stationId1, stationId2) {
+function ZooElite::ConnectStations(stationId1, stationId2, recursive) {
 	LogManager.Log("Connecting Stations: " + stationId1 + " and " + stationId2, 4);
 	
 	//for junctions
-	local JUNCTION_GAP_SIZE = 5;
+	local JUNCTION_GAP_SIZE = 0;
 	local MAXIMUM_DISTANCE_JUNCTION_POINT = 15000;
 	
-	ClearSigns();
+	//ClearSigns();
 	//station_table[stationId1].signStation();
 	//station_table[stationId2].signStation();
 
@@ -115,8 +115,22 @@ function ZooElite::ConnectStations(stationId1, stationId2) {
 			if(junction_information2 == null) {
 				LogManager.Log("Junction construction failed", 4);
 			}
-			station2_tile = 0 - dtp.parts[junction_information2.junction_part_index].previous_part_offset + junction_information2.tile;
-			station2_part = dtp.parts[junction_information2.junction_part_index].previous_part;
+			station2_tile = dtp.parts[junction_information2.junction_part_index].previous_part_offset + junction_information2.tile;
+			station2_part = dtp.GetOppositePart(dtp.parts[junction_information2.junction_part_index].previous_part);
+			
+			//make it connect up right depending on station orientation.
+			if(station2_part == dtp.SN_LINE) {
+				station2_tile = GetTileRelative(station2_tile, 0, -1);
+			}	
+			else if (station2_part == dtp.NS_LINE) {
+				station2_tile = GetTileRelative(station2_tile, 0, 1);
+			}
+			else if (station2_part == dtp.WE_LINE) {
+				station2_tile = GetTileRelative(station2_tile, -1, 0);
+			}
+			else if (station2_part == dtp.EW_LINE) {
+				station2_tile = GetTileRelative(station2_tile, 1, 0);
+			}	
 		}
 		
 		//-------------------------------------------//
@@ -201,91 +215,46 @@ function ZooElite::ConnectStations(stationId1, stationId2) {
 		if(station1.routes[dirIndex1] != null) {
 			LogManager.Log("Need to buildJunction for station: " + station1.stationId, 4);
 			local djb = DoubleJunctionBuilder([station1.routes[dirIndex1]],
-										AIBaseStation.GetLocation(station1.stationId) , JUNCTION_GAP_SIZE , MAXIMUM_DISTANCE_JUNCTION_POINT);
+										AIBaseStation.GetLocation(station2.stationId) , JUNCTION_GAP_SIZE , MAXIMUM_DISTANCE_JUNCTION_POINT);
 			local junction_information1 = djb.BuildJunction(Direction.GetDirectionsToTile(AIBaseStation.GetLocation(station2.stationId),
 																					AIBaseStation.GetLocation(station1.stationId)).first);//aqui esta o erro (Nao so aqui)
 			if(junction_information1 == null) {
 				LogManager.Log("Junction1 construction failed", 4);
 			}
 			station1_tile = dtp.parts[junction_information1.junction_part_index].previous_part_offset + junction_information1.tile;
-			station1_part = dtp.parts[junction_information1.junction_part_index].previous_part;
+			station1_part = dtp.GetOppositePart(dtp.parts[junction_information1.junction_part_index].previous_part);
 		}
 		
 		//--------------------------------//
 		/////// BUILD TRACK  ////////////////
+		/*if(!recursive) {
+			local testModeInstance = AITestMode();
+			ZooElite.ConnectStations(stationId2, stationId1, true);
+			testModeInstance = null;
+		}*/
+		
 		local drrb = DoubleRailroadBuilder(station2_tile, station1_tile, station2_part, 
 											dtp.GetOppositePart(station1_part));
 				
 		local double_railroad = drrb.BuildTrack();
 		
 		if(double_railroad != null) {
+		
 			station1.routes[dirIndex1] = double_railroad.path;
-			station2.routes[dirIndex2] = double_railroad.path;
+			
+			station2.routes[dirIndex2] = double_railroad.path.reversePath();
+			
+			/*LogManager.Log("the tile for station1 path is: " + double_railroad.path.tile, 4);
+			Sign(double_railroad.path.tile, "pathTile");
+			LogManager.Log("the tile at station 1 is: " + station1_tile, 4);
+			Sign(station1_tile, "station1");
+			LogManager.Log("the tile at station 2 is: " + station2_tile, 4);
+			Sign(station2_tile, "station2");*/
+			Sign(station2.routes[dirIndex2].tile, "pathRev");
+			Sign(station2.routes[dirIndex2].child_path.tile, "childRev");
+			Sign(station2.routes[dirIndex2].child_path.child_path.tile, "child2Rev");
 		}
-				
-	//I have no idea how this is supposed to work, but we're going to try it
-	//Holder Function for rail builder
 
-	/* Create an instance of the pathfinder. */
-	//local pathfinder = RailPathFinder();
-	/* Set the cost for making a turn high. */
-/*	
-	local from_tile = station_table[stationId1].exit_tile;
-	local from_tile2 = station_table[stationId1].exit_tile2;
-	local to_tile = station_table[stationId2].enter_tile;
-	local to_tile2 = station_table[stationId2].enter_tile2;
-	
-	LogManager.Log("Pathing Stations from " + from_tile + " to " + to_tile, 4);
-	Sign(from_tile, "Start1");
-	Sign(from_tile2, "Start2");
-	Sign(to_tile, "End1");
-	Sign(to_tile2, "End2");
-	AITile.DemolishTile(from_tile2);
-	AITile.DemolishTile(to_tile2);
-	pathfinder.InitializePath([[from_tile2, from_tile]], [[to_tile2, to_tile]]);
-	
-
-	/* Try to find a path. */
- /* local path = false;
-  while (path == false) {
-	path = pathfinder.FindPath(-1);
-	this.Sleep(1);
-  }
-
-  
-  if (path == null) {
-	/* No path was found. */
-/*	LogManager.Log("pathfinder.FindPath return null", 5);
-	return false;
-  }
-  	
-	local prev = null;
-	local prevprev = null;
-	while (path != null) {
-	  if (prevprev != null) {
-	    if (AIMap.DistanceManhattan(prev, path.GetTile()) > 1) {
-	      if (AITunnel.GetOtherTunnelEnd(prev) == path.GetTile()) {
-	        AITunnel.BuildTunnel(AIVehicle.VT_RAIL, prev);
-	      } else {
-	        local bridge_list = AIBridgeList_Length(AIMap.DistanceManhattan(path.GetTile(), prev) + 1);
-	        bridge_list.Valuate(AIBridge.GetMaxSpeed);
-	        bridge_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
-	        AIBridge.BuildBridge(AIVehicle.VT_RAIL, bridge_list.Begin(), prev, path.GetTile());
-	      }
-	      prevprev = prev;
-	      prev = path.GetTile();
-	      path = path.GetParent();
-	    } else {
-	      AIRail.BuildRail(prevprev, prev, path.GetTile());
-	    }
-	  }
-	  if (path != null) {
-	    prevprev = prev;
-	    prev = path.GetTile();
-	    path = path.GetParent();
-	  }
-	}
-	*/
 
 	LogManager.Log("Pathing Done!", 2);
 }
