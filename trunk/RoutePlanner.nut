@@ -46,7 +46,7 @@ function RoutePlanner::buildNetwork() {
 		}
 		
 		if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
-			ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2]);
+			ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], false);
 			ZooElite.ConnectBaseRegion(base_regions[route[0]]);
 			ZooElite.ConnectBaseRegion(base_regions[route[1]]);
 		}

@@ -117,6 +117,70 @@ class Path {
 		user_data = node.user_data;
 	}
 
+	function reversePath() {
+		local path_count = this.Count();
+		//local test = this.child_path;
+		local new_path = null;
+		local previous_path = null;
+		local current_path = null;
+		local i = 2;
+		while(i <= path_count) {
+			current_path = this.getSwitchedTile(path_count-i);
+			current_path.parent_path = previous_path;
+			if(previous_path != null) {
+				previous_path.child_path = current_path;
+			}
+			previous_path = current_path;
+			if(i == 2) {
+				new_path = current_path;
+			}
+			//LogManager.Log("current path has" + i + " has tileId " + current_path.tile, 4);
+			i += 1;
+		}
+		
+		LogManager.Log("new path tile is " + new_path.tile, 4);
+		return new_path;
+		/*if(this.child_path != null) {
+			this.child_path.reversePath();
+			this.child_path.child_path = this;
+			this.parent_path = this.child_path;
+			this.child_path = null;
+		}*/
+	}
+	
+	function getSwitchedTile(tile_num) {
+		
+		local i = 0;
+		local path = this;
+		//if(path == null){
+		//	LogManager.Log("fuck", 4);
+		//}
+		while(i < tile_num){
+			path = path.child_path;
+			i++;
+		}
+		
+		local dtp = DoubleTrackParts();
+		if(path.part_index == DoubleTrackParts.BRIDGE){
+			local user_data = path.user_data;
+			local new_user_data = BridgeInformation();
+			new_user_data.exit_tile = user_data.start_tile;
+			new_user_data.start_tile = user_data.exit_tile;
+			new_user_data.part_index = dtp.GetOppositePart(user_data.part_index);
+			new_user_data.primary_bridges = user_data.primary_bridges;
+			new_user_data.secondary_bridges = user_data.secondary_bridges;
+			new_user_data.secondary_rail_offset = user_data.secondary_rail_offset ;
+				
+			local new_path = Path(AyStarNode(path.tile , path.part_index, 0 , new_user_data, null , 0 , 0));
+			return new_path;
+		}
+		else {		
+			local new_path = Path(AyStarNode(path.tile , dtp.GetOppositePart(path.part_index), 0 , null , null , 0 , 0));
+			//LogManager.Log("switched tile " + tile_num + " has tileId " + new_path.tile, 4);
+			return new_path;
+		}
+	}
+	
 	function Count() {
 		local count = 1;
 		local path = this;
