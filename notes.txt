@@ -29,3 +29,8 @@ Overall Running
 - On that note, perhaps busses should be connected seperately from building the station? We could save locations and process them later...?
 - Save/Load and Data Structures...saving routes?
 - For God Sake's manage money...
+
+Rail Building
+------------------
+Build Depot just before entrance to station and associate
+Should we care about train turnaround settings? If we don't they might have issues at drive through stations
