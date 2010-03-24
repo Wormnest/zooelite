@@ -100,6 +100,42 @@ function GetBestEngine(cargoID) {
 }
 
 /**
+ *
+ * Find the best engine for a given railtype.
+ */
+function GetBestRailEngine(railType) {
+		local engines = AIEngineList(AIVehicle.VT_RAIL);
+		engines.Valuate(AIEngine.GetRailType);
+		engines.KeepValue(railType);
+		engines.Valuate(scoreEngineBasedOnSpecs);
+		engines.Sort(AIAbstractList.SORT_BY_VALUE, false);
+		return engines.Begin();
+}
+
+function scoreEngineBasedOnSpecs(engine_id) {
+	local score = 0;
+	score += AIEngine.GetReliability(engine_id);
+	score += AIEngine.GetMaxSpeed(engine_id);
+	score = score / AIEngine.GetPrice(engine_id);
+	return score;
+}
+
+/**
+ *
+ * Find the best (largest) wagon for a given cargo ID and rail type
+ */
+function GetBestRailWagon(cargoID, railType) {
+		local engines = AIEngineList(AIVehicle.VT_RAIL);
+		engines.Valuate(AIEngine.GetCargoType);
+		engines.KeepValue(cargoID);
+		engines.Valuate(AIEngine.GetRailType);
+		engines.KeepValue(railType);
+		engines.Valuate(AIEngine.GetCapacity);
+		engines.Sort(AIAbstractList.SORT_BY_VALUE, false);
+		return engines.Begin();
+}
+
+/**
  * If this is the month before a bankrupcy check (March, June, September, December),
  * keep enough cash around to pay for station maintenance.
  * In other months, feel free to spend what we have.
