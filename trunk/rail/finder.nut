@@ -459,6 +459,14 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 			this_station.enter_tile = exit_tile;
 			this_station.enter_tile2 = GetTileRelative(exit_tile, 0, -1);
 			
+			//make sure we never block the track with roads
+			ZooElite.off_limit_tiles.push(this_station.enter_tile2);
+			ZooElite.off_limit_tiles.push(this_station.exit_tile2);
+			ZooElite.off_limit_tiles.push(GetTileRelative(this_station.enter_tile2, 0, -1));
+			ZooElite.off_limit_tiles.push(GetTileRelative(this_station.exit_tile2, 0, -1));
+			
+
+			
 			//Build Entry and exit tiles
 			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NW_SE);
 			AIRail.BuildRailTrack(entry_tile, AIRail.RAILTRACK_NW_SE);
@@ -497,6 +505,14 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 			this_station.enter2_tile2 = GetTileRelative(entry_tile, 0, 1);
 			this_station.exit2_tile = exit_tile;
 			this_station.exit2_tile2 = GetTileRelative(exit_tile, 0, 1);
+			
+			//make sure we never block the track with roads
+			ZooElite.off_limit_tiles.push(this_station.enter2_tile2);
+			ZooElite.off_limit_tiles.push(this_station.exit2_tile2);
+			ZooElite.off_limit_tiles.push(GetTileRelative(this_station.enter2_tile2, 0, 1));
+			ZooElite.off_limit_tiles.push(GetTileRelative(this_station.exit2_tile2, 0, 1));
+			
+
 			
 			//Build Entry/Exit Tracks
 			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NW_SE);
@@ -572,6 +588,14 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 			this_station.exit_tile = exit_tile;
 			this_station.exit_tile2 = GetTileRelative(exit_tile, -1, 0);
 			
+			//make sure we never block the track with roads
+			ZooElite.off_limit_tiles.push(this_station.enter_tile2);
+			ZooElite.off_limit_tiles.push(this_station.exit_tile2);
+			ZooElite.off_limit_tiles.push(GetTileRelative(this_station.enter_tile2, -1, 0));
+			ZooElite.off_limit_tiles.push(GetTileRelative(this_station.exit_tile2, -1, 0));
+			
+
+			
 			//Build Entry and exit tiles
 			Sign(exit_tile, "Exit Tile");
 			AIRail.BuildRailTrack(exit_tile, AIRail.RAILTRACK_NE_SW);
@@ -619,6 +643,12 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 			this_station.enter2_tile2 = GetTileRelative(entry_tile, 1, 0);
 			this_station.exit2_tile = exit_tile;
 			this_station.exit2_tile2 = GetTileRelative(exit_tile, 1, 0);
+			
+			//make sure we never block the track with roads
+			ZooElite.off_limit_tiles.push(this_station.enter2_tile2);
+			ZooElite.off_limit_tiles.push(this_station.exit2_tile2);
+			ZooElite.off_limit_tiles.push(GetTileRelative(this_station.enter2_tile2, 1, 0));
+			ZooElite.off_limit_tiles.push(GetTileRelative(this_station.exit2_tile2, 1, 0));
 			
 			
 			//Build Entry/Exit Tracks
