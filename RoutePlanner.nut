@@ -50,7 +50,7 @@ function RoutePlanner::buildNetwork() {
 		
 			if(base_regions[route[0]][4] == 0) {
 				ZooElite.ConnectBaseRegion(base_regions[route[0]]);
-				base_regions[route[1]][4] = 1;
+				base_regions[route[0]][4] = 1;
 				
 			}
 			if(base_regions[route[1]][4] == 0) {
