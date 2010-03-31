@@ -1,3 +1,12 @@
+class CustomPathFinder extends RoadPathFinder {   
+	function InitializePath(sources, goals, ignored_tiles) {      
+		local nsources = [];      
+		foreach (node in sources) {        
+			nsources.push([node, 0xFF]);      
+		}      
+		this._pathfinder.InitializePath(nsources, goals, ignored_tiles);   
+	}
+}
 
 //Builds at most -max- more stations in the given town
 //returns an array of stations built
@@ -161,7 +170,7 @@ function ZooElite::LinkTileToTile(tileId, tileId2) {
 	//local town_loc = AITown.GetLocation(townId);
 	//Holder Function for rail builder
 	/* Create an instance of the pathfinder. */
-	local pathfinder = RoadPathFinder();
+	local pathfinder = CustomPathFinder();
 	/* Set the cost for making a turn high. */
 	pathfinder.cost.turn = 250;
 	pathfinder.cost.no_existing_road = 120;
@@ -169,7 +178,7 @@ function ZooElite::LinkTileToTile(tileId, tileId2) {
 	//TODO: Add some Intelligence to figure out if we can afford things based on available cash / master plan
 	pathfinder.cost.tunnel_per_tile = 200;
 	LogManager.Log("Pathing Stations", 2);
-	pathfinder.InitializePath([tileId], [tileId2]);
+	pathfinder.InitializePath([tileId], [tileId2], ZooElite.off_limit_tiles);
 
 	/* Try to find a path. */
   local path = false;

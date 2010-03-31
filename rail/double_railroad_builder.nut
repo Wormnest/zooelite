@@ -80,7 +80,7 @@ class DoubleRailroadBuilder {
 	static BRIDGE_TILE_COST = 100;
 	static BRIDGE_MAX_LENGTH = 15;
 
-	static PATHFINDING_TIME_OUT = (365 * 2.5).tointeger();/* days. */
+	static PATHFINDING_TIME_OUT = 40; //(365 * 2.5).tointeger();/* days. */
 	static PATHFINDING_ITERATIONS = 100000;
 
 	tile_from = null;

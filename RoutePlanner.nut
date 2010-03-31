@@ -30,8 +30,8 @@ function RoutePlanner::buildNetwork() {
 	local towns = AITownList();
 	RoutePlanner.getBaseRegions(towns);
 	
-	//each base region in list has 4 parameters:
-	//0 - center, 1- towns, 2 - stationid, 3 - built?
+	//each base region in list has 5 parameters:
+	//0 - center, 1- towns, 2 - stationid, 3 - built?, 4 - connected?
 	
 	local routes = RoutePlanner.getMinSpanningRoutes();
 	
@@ -46,9 +46,18 @@ function RoutePlanner::buildNetwork() {
 		}
 		
 		if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
-			ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], false);
-			ZooElite.ConnectBaseRegion(base_regions[route[0]]);
-			ZooElite.ConnectBaseRegion(base_regions[route[1]]);
+			ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
+		
+			if(base_regions[route[0]][4] == 0) {
+				ZooElite.ConnectBaseRegion(base_regions[route[0]]);
+				base_regions[route[1]][4] = 1;
+				
+			}
+			if(base_regions[route[1]][4] == 0) {
+				ZooElite.ConnectBaseRegion(base_regions[route[1]]);
+				base_regions[route[1]][4] = 1;
+				
+			}
 		}
 	}		
 
@@ -933,7 +942,7 @@ function RoutePlanner::addBaseRegions(regions) {
 		Sign(regions[0][i], "BASE REGION");
 		//ZooElite.BuildBaseStation(regions[1][i], regions[0][i], 1, 0, 0);
 	
-		base_regions.push([regions[0][i], regions[1][i], null, 0]);
+		base_regions.push([regions[0][i], regions[1][i], null, 0, 0]);
 	}
 }
 

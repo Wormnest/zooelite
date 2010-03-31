@@ -35,8 +35,10 @@ class ZooElite extends AIController {
 	function Start();
 	town_table = {};
 	station_table = {};
+	off_limit_tiles = [];
 	base_regions = [];
-	dtp = null
+	dtp = null;
+	route_table = [];
 	
 	constructor(){
 		ai_instance = this;
@@ -52,6 +54,7 @@ require("rail/finder.nut");
 require("rail/tracks.nut");
 require("obects/town.nut");
 require("obects/station.nut");
+require("obects/route.nut");
 
 function ZooElite::Start() {
 	this.Sleep(1);
