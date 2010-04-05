@@ -39,15 +39,21 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			//make it connect up right depending on station orientation.
 			if(station2.station_dir[0] == dtp.SN_LINE) {
 				station2_tile = station2.exit_tile;
+				AITile.LevelTiles(GetTileRelative(station2_tile, -1, 0), GetTileRelative(station2_tile, 3, 2));
 			}	
 			else if (station2.station_dir[0] == dtp.NS_LINE) {
 				station2_tile = GetTileRelative(station2.enter_tile, 0, 1);
+				AITile.LevelTiles(GetTileRelative(station2_tile, -1, 0), GetTileRelative(station2_tile, 3, -2));
+
 			}
 			else if (station2.station_dir[0] == dtp.WE_LINE) {
 				station2_tile = station2.enter_tile;
+				AITile.LevelTiles(GetTileRelative(station2_tile, 0, -1), GetTileRelative(station2_tile, 2, 3));
+
 			}
 			else if (station2.station_dir[0] == dtp.EW_LINE) {
 				station2_tile = GetTileRelative(station2.exit_tile, 1, 0);
+				AITile.LevelTiles(GetTileRelative(station2_tile, 0, -1), GetTileRelative(station2_tile, -2, 3));
 			}			
 		}
 		
@@ -86,25 +92,41 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 				local exitside = station2.exit2_tile;
 				local enterside = station2.enter2_tile;
 				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.EAST) station2_tile = enterside;
-				else station2_tile = exitside;				
+				else station2_tile = exitside;
+
+				//Sign(GetTileRelative(station2_tile, 2, 4), "levelB");
+				//Sign(GetTileRelative(station2_tile, -3, 4), "levelE");
+				AITile.LevelTiles(station2_tile, GetTileRelative(station2_tile, -3, 4));
+				AITile.LevelTiles(station2_tile, GetTileRelative(station2_tile, 3, 4));
 			}
 			else if (station2.station_dir[dirIndex2[f2]] == dtp.NS_LINE) {
 				local exitside = GetTileRelative(station2.exit_tile, 0, 1);
 				local enterside = GetTileRelative(station2.enter_tile, 0, 1);
 				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.EAST) station2_tile = enterside;
 				else station2_tile = exitside;
+				
+				Sign(GetTileRelative(station2_tile, 2, -4), "levelB");
+				Sign(GetTileRelative(station2_tile, -3, -4), "levelE");
+				AITile.LevelTiles(station2_tile, GetTileRelative(station2_tile, -3, -4));
+				AITile.LevelTiles(station2_tile, GetTileRelative(station2_tile, 3, -4));
 			}
 			else if (station2.station_dir[dirIndex2[f2]] == dtp.WE_LINE) {
 				local exitside = station2.exit2_tile;
 				local enterside = station2.enter2_tile;
 				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.NORTH) station2_tile = enterside;
 				else station2_tile = exitside;
+				
+				AITile.LevelTiles(station2_tile, GetTileRelative(station2_tile, 4, -3));
+				AITile.LevelTiles(station2_tile, GetTileRelative(station2_tile, 4, 3));
 			}
 			else if (station2.station_dir[dirIndex2[f2]] == dtp.EW_LINE) {
 				local exitside = GetTileRelative(station2.exit_tile, 1, 0);
 				local enterside = GetTileRelative(station2.enter_tile, 1, 0);
 				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.NORTH) station2_tile = enterside;
 				else station2_tile = exitside;
+				
+				AITile.LevelTiles(station2_tile, GetTileRelative(station2_tile, -4, -3));
+				AITile.LevelTiles(station2_tile, GetTileRelative(station2_tile, -4, 3));
 			}
 		}
 		
@@ -204,24 +226,33 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 				local enterside = station1.enter2_tile2;
 				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.EAST) station1_tile = enterside;
 				else station1_tile = exitside;
+				AITile.LevelTiles(station1_tile, GetTileRelative(station1_tile, -3, 4));
+				AITile.LevelTiles(station1_tile, GetTileRelative(station1_tile, 3, 4));
 			}
 			else if (station1.station_dir[dirIndex1[f1]] == dtp.NS_LINE) {
 				local exitside = station1.exit_tile;
 				local enterside = station1.enter_tile;
 				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.EAST) station1_tile = enterside;
 				else station1_tile = exitside;
+				AITile.LevelTiles(station1_tile, GetTileRelative(station1_tile, -3, -4));
+				AITile.LevelTiles(station1_tile, GetTileRelative(station1_tile, 3, -4));
+				
 			}	
 			else if (station1.station_dir[dirIndex1[f1]] == dtp.WE_LINE) {
 				local exitside = station1.exit2_tile2;
 				local enterside = station1.enter2_tile2;
 				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.NORTH) station1_tile = enterside;
 				else station1_tile = exitside;
+				AITile.LevelTiles(station1_tile, GetTileRelative(station1_tile, 4, -3));
+				AITile.LevelTiles(station1_tile, GetTileRelative(station1_tile, 4, 3));
 			}
 			else if (station1.station_dir[dirIndex1[f1]] == dtp.EW_LINE) {
 				local exitside = station1.exit_tile;
 				local enterside = station1.enter_tile;
 				if(Direction.GetDirectionsToTile(exitside, enterside).first == Direction.NORTH) station1_tile = enterside;
 				else station1_tile = exitside;
+				AITile.LevelTiles(station1_tile, GetTileRelative(station1_tile, -4, -3));
+				AITile.LevelTiles(station1_tile, GetTileRelative(station1_tile, -4, 3));
 			}
 		}
 		
