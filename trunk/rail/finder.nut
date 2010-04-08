@@ -237,7 +237,7 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 		//Run through for through-stations...little more difficult
 	} else {
 		while(verticletilelist.Count() > 0 || tilelist.Count() > 0) {
-			LogManager.Log("Found " + verticletilelist.Count() + " " + tilelist.Count() + " locations for " +  AITown.GetName(townId), 4);
+			//LogManager.Log("Found " + verticletilelist.Count() + " " + tilelist.Count() + " locations for " +  AITown.GetName(townId), 4);
 			local top_left_tile = null;
 			local horizontal = true;
 			local swap = true;
@@ -580,6 +580,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 				build_tile = false;
 				this_station.bus_front_tiles.push(front_tile);
 				this_station.bus_stops.push(active_tile);
+				Sign(active_tile, "BS");
 			} else {
 				build_tile = true;
 			}
@@ -711,7 +712,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 		
 		//in case we want bus stops
 		local build_tile = true;
-		local start_tile = GetTileRelative(top_left_tile, 1, platforms);
+		local start_tile = GetTileRelative(top_left_tile, 0, platforms);
 		for(local i = 0; i < RAIL_STATION_PLATFORM_LENGTH; i++) {
 			local active_tile = GetTileRelative(start_tile, i, 0);
 			local front_tile  = GetTileRelative(start_tile, i, 1);
@@ -721,6 +722,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 				build_tile = false;
 				this_station.bus_front_tiles.push(front_tile);
 				this_station.bus_stops.push(active_tile);
+				Sign(active_tile, "BS");
 			} else {
 				build_tile = true;
 			}
@@ -1132,6 +1134,7 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 	local firstIter = true;
 	foreach(town in towns) {
 		if(firstIter) {
+			LogManager.Log("should be building bus stops", 4);
 			station_table[baseStation].buildBusStops();
 			firstIter = false;
 		}
