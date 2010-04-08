@@ -34,12 +34,17 @@ class Station {
 	
 	function buildBusStops() {
 		LogManager.Log("Building bus stops for station " + this.stationId, 4);
-		if(this.bus_built == true)
+		if(this.bus_built == true) {
+			LogManager.Log("Bus stops ALREADY built", 4);
 			return true;
+		}
 		foreach(idx, build_tile in this.bus_stops) {
 			local front_tile = bus_front_tiles[idx];
 			LogManager.Log(idx + " " + build_tile + " " + front_tile, 4);
-			AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId);
+			if(AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId) == false) {
+				LogManager.Log("FAILED busstop", 4);
+			}
+			
 			AIRoad.BuildRoad(build_tile, front_tile);
 		}
 		this.bus_built = true;
