@@ -275,24 +275,24 @@ function DoubleJunctionBuilder::DemolishJunction(junction_information){
 		tile = path.parent_path.tile;
 		part_index = path.parent_path.part_index;
 		dtp.RemoveDoublePartSignals(tile , part_index);
-		dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
+		//dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
 
 		tile = path.child_path.tile;
 		part_index = path.child_path.part_index;
 		dtp.RemoveDoublePartSignals(tile , part_index);
-		dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
+		//dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
 
 	/* Lines and Diagonals.*/
 	}else{
 		tile = path.parent_path.parent_path.tile;
 		part_index = path.parent_path.parent_path.part_index;
 		dtp.RemoveDoublePartSignals(tile , part_index);
-		dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
+		//dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
 
 		tile = path.child_path.tile;
 		part_index = path.child_path.part_index;
 		dtp.RemoveDoublePartSignals(tile , part_index);
-		dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
+		//dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
 	}
 	tile = path.tile;
 	part_index = path.part_index;
@@ -324,12 +324,12 @@ function DoubleJunctionBuilder::BuildJunctionPart(junction_information){
 		tile = path.parent_path.tile;
 		part_index = path.parent_path.part_index;
 		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
-		if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_PBS_ONEWAY)) return false;
+		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
 
 		tile = path.child_path.tile;
 		part_index = path.child_path.part_index;
 		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
-		if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_PBS_ONEWAY)) return false;
+		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
 
 	/* Lines and Diagonals.*/
 	}else{
@@ -344,12 +344,12 @@ function DoubleJunctionBuilder::BuildJunctionPart(junction_information){
 		tile = path.parent_path.parent_path.tile;
 		part_index = path.parent_path.parent_path.part_index;
 		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
-		if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_PBS_ONEWAY)) return false;
+		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
 
 		tile = path.child_path.tile;
 		part_index = path.child_path.part_index;
 		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
-		if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_PBS_ONEWAY)) return false;
+		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
 	}
 
 	tile = path.tile;
@@ -365,8 +365,8 @@ function DoubleJunctionBuilder::BuildJunctionPart(junction_information){
 	dtp.LevelPart(junction_information.tile , junction.part_index , height);
 
 	if(!dtp.BuildDoublePart(junction_information.tile , junction.part_index)) return false;
-	if(!dtp.BuildDoublePartSignals(junction_information.tile ,
-		junction.part_index , AIRail.SIGNALTYPE_PBS_ONEWAY)) return false;
+	//if(!dtp.BuildDoublePartSignals(junction_information.tile ,
+		//junction.part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
 
 	/* Now, insert the junction_information in the path nodes that were affected. */
 	/* Bends.*/

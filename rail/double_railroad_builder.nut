@@ -714,7 +714,7 @@ function DoubleRailroadBuilder::BuildTrack() {
 	}
 */
 	/* Build the signals. */
-	BuildSignals(final_path , 6);
+	BuildSignals(final_path , 3);
 
 	return double_railroad;
 }

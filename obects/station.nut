@@ -1,4 +1,5 @@
 class Station {
+		station_tile = null;
 		stationId = null;
 		platforms = null;
 		type = null;
