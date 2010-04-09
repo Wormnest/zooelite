@@ -105,8 +105,10 @@ function GetBestEngine(cargoID) {
  */
 function GetBestRailEngine(railType) {
 		local engines = AIEngineList(AIVehicle.VT_RAIL);
-		engines.Valuate(AIEngine.GetRailType);
-		engines.KeepValue(railType);
+		engines.Valuate(AIEngine.HasPowerOnRail, railType);
+		engines.KeepValue(1);
+		engines.Valuate(AIEngine.IsWagon);
+		engines.KeepValue(0);
 		engines.Valuate(scoreEngineBasedOnSpecs);
 		engines.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		return engines.Begin();
@@ -126,10 +128,12 @@ function scoreEngineBasedOnSpecs(engine_id) {
  */
 function GetBestRailWagon(cargoID, railType) {
 		local engines = AIEngineList(AIVehicle.VT_RAIL);
-		engines.Valuate(AIEngine.GetCargoType);
-		engines.KeepValue(cargoID);
-		engines.Valuate(AIEngine.GetRailType);
-		engines.KeepValue(railType);
+		engines.Valuate(AIEngine.CanRunOnRail, railType);
+		engines.KeepValue(1);
+		engines.Valuate(AIEngine.IsWagon);
+		engines.KeepValue(1);
+		engines.Valuate(AIEngine.CanRefitCargo, cargoID);
+		engines.KeepValue(1);
 		engines.Valuate(AIEngine.GetCapacity);
 		engines.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		return engines.Begin();

@@ -67,49 +67,49 @@ function RailroadCommon::BuildSignal(tile , rail_track , sense , signal_type){
 	switch(rail_track){
 		case AIRail.RAILTRACK_NE_SW:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(1 , 0);
-			}else{
 				front_tile += AIMap.GetTileIndex(-1 , 0);
+			}else{
+				front_tile += AIMap.GetTileIndex(1 , 0);
 			}
 		break;
 
 		case AIRail.RAILTRACK_NW_SE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , -1);
-			}else{
 				front_tile += AIMap.GetTileIndex(0 , 1);
+			}else{
+				front_tile += AIMap.GetTileIndex(0 , -1);
 			}
 		break;
 
 		case AIRail.RAILTRACK_NW_NE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , -1);
-			}else{
 				front_tile += AIMap.GetTileIndex(-1 , 0);
+			}else{
+				front_tile += AIMap.GetTileIndex(0, -1);
 			}
 		break;
 
 		case AIRail.RAILTRACK_SW_SE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(1 , 0);
-			}else{
 				front_tile += AIMap.GetTileIndex(0 , 1);
+			}else{
+				front_tile += AIMap.GetTileIndex(1 , 0);
 			}
 		break;
 
 		case AIRail.RAILTRACK_NW_SW:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , -1);
+				front_tile -= AIMap.GetTileIndex(-1 , 0);
 			}else{
-				front_tile += AIMap.GetTileIndex(1 , 0);
+				front_tile -= AIMap.GetTileIndex(0 , 1);
 			}
 		break;
 
 		case AIRail.RAILTRACK_NE_SE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , 1);
+				front_tile -= AIMap.GetTileIndex(0 , 1);
 			}else{
-				front_tile += AIMap.GetTileIndex(-1 , 0);
+				front_tile -= AIMap.GetTileIndex(-1 , 0);
 			}
 		break;
 	}
@@ -122,54 +122,54 @@ function RailroadCommon::RemoveSignal(tile , rail_track , sense){
 	switch(rail_track){
 		case AIRail.RAILTRACK_NE_SW:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(1 , 0);
-			}else{
 				front_tile += AIMap.GetTileIndex(-1 , 0);
+			}else{
+				front_tile += AIMap.GetTileIndex(1 , 0);
 			}
 		break;
 
 		case AIRail.RAILTRACK_NW_SE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , -1);
-			}else{
 				front_tile += AIMap.GetTileIndex(0 , 1);
+			}else{
+				front_tile += AIMap.GetTileIndex(0 , -1);
 			}
 		break;
 
 		case AIRail.RAILTRACK_NW_NE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , -1);
+				front_tile += AIMap.GetTileIndex(0 , 1);
 			}else{
-				front_tile += AIMap.GetTileIndex(-1 , 0);
+				front_tile += AIMap.GetTileIndex(1 , 0);
 			}
 		break;
 
 		case AIRail.RAILTRACK_SW_SE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(1 , 0);
+				front_tile += AIMap.GetTileIndex(-1 , 0);
 			}else{
-				front_tile += AIMap.GetTileIndex(0 , 1);
+				front_tile += AIMap.GetTileIndex(0 , -1);
 			}
 		break;
 
 		case AIRail.RAILTRACK_NW_SW:
-			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , -1);
-			}else{
-				front_tile += AIMap.GetTileIndex(1 , 0);
-			}
-		break;
-
-		case AIRail.RAILTRACK_NE_SE:
 			if(sense == RailroadCommon.CLOCKWISE){
 				front_tile += AIMap.GetTileIndex(0 , 1);
 			}else{
 				front_tile += AIMap.GetTileIndex(-1 , 0);
 			}
 		break;
+
+		case AIRail.RAILTRACK_NE_SE:
+			if(sense == RailroadCommon.CLOCKWISE){
+				front_tile += AIMap.GetTileIndex(0 , -1);
+			}else{
+				front_tile += AIMap.GetTileIndex(1 , 0);
+			}
+		break;
 	}
 	if( AIRail.GetSignalType(tile , front_tile) != AIRail.SIGNALTYPE_NONE  )
-		return AIRail.RemoveSignal(tile , front_tile);
+		return AIRail.RemoveSignal(front_tile , tile);
 	else return true;
 }
 

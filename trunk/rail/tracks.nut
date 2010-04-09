@@ -308,11 +308,15 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			}
 			
 			//local drrdb = DoubeDepotBuilder();
-			local d_t1 = DoubleDepotBuilder.BuildDepots(double_railroad.path, 100000, true);
-			local d_t2 = DoubleDepotBuilder.BuildDepots(double_railroad.path, 100000, false);
+			local depot;
+			if(!(depot = DoubleDepotBuilder.BuildDepots(double_railroad.path, 100000, true))) {
+				LogManager.Log("Second choice depot", 4);
+				depot = DoubleDepotBuilder.BuildDepots(double_railroad.path, 100000, false);
+			}
 			
-			local new_route = Route(station1, station2, d_t1, d_t2);
+			local new_route = Route(stationId1, stationId2, depot);
 			route_table.push(new_route);
+			return new_route;
 			
 			/*LogManager.Log("the tile for station1 path is: " + double_railroad.path.tile, 4);
 			Sign(double_railroad.path.tile, "pathTile");
@@ -327,19 +331,25 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 		
 		else {
 			LogManager.Log("need to try alternative path", 4);
+			local new_route;
 			if(f1 == 0 && f2 == 0) {
-				ConnectStations(stationId1, stationId2, 1, 0);
+				new_route = ConnectStations(stationId1, stationId2, 1, 0);
+		
 			}
 			if(f1 == 1 && f2 == 0) {
-				ConnectStations(stationId1, stationId2, 0, 1);
+				new_route = ConnectStations(stationId1, stationId2, 0, 1);
 			}
 			if(f1 == 0  && f2 == 1) {
-				ConnectStations(stationId1, stationId2, 1, 1);
+				new_route = ConnectStations(stationId1, stationId2, 1, 1);
 			}
 			if(f1 == 1 && f2 ==1) {
 				//we have exausted all possbilities
 				LogManager.Log("pathing failed!", 2);
 				return 0;
+			}
+			
+			if(new_route != null) {
+				return new_route;
 			}
 		}
 			

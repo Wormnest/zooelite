@@ -263,7 +263,7 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 			} else {
 				top_left_tile = horz_propisiton;
 			}
-			if(horizontal) {
+			if(horizontal == true) {
 				//1   --PPPPPPP--    3
 				//   /--PPPPPPP--\
 				//2-/---PPPPPPP---\--4
@@ -329,7 +329,7 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 				} else if(canBuildRectangleAtCorner(spot2, -DOWN_TRACK_SPACE, 1)) {
 					left_bot_bool = 1;
 				} else {
-					tilelist.RemoveTop(1);
+					verticletilelist.RemoveTop(1);
 					continue;
 				}
 				if(canBuildRectangleAtCorner(spot3, DOWN_TRACK_SPACE, 1) && canBuildRectangleAtCorner(spot4, DOWN_TRACK_SPACE, 1)) {
@@ -343,7 +343,7 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 				} else if(canBuildRectangleAtCorner(spot4, DOWN_TRACK_SPACE, 1)) {
 					right_bot_bool = 1;
 				} else {
-					tilelist.RemoveTop(1);
+					verticletilelist.RemoveTop(1);
 					continue;
 				}
 				return ZooElite.BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);
@@ -430,6 +430,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 	this_station.bus_front_tiles = [];
 	this_station.serviced_cities = [];
 	this_station.routes = [null, null];
+	this_station.station_tile = top_left_tile;
 	
 	local is_terminus = false;
 	local width = RAIL_STATION_PLATFORM_LENGTH + 2 * (platforms + 1);

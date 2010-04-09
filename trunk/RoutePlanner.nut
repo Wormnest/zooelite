@@ -24,7 +24,6 @@ routes = [];
 
 //starts the recursive region building process
 function RoutePlanner::buildNetwork() {
-
 	//step one - we don't want to work with towns. We work with base regions - stations connected to a close group of towns with roads
 	//a base region can have any number of town, from 1 to usually a max of around 6.
 	local towns = AITownList();
@@ -33,6 +32,7 @@ function RoutePlanner::buildNetwork() {
 	//each base region in list has 5 parameters:
 	//0 - center, 1- towns, 2 - stationid, 3 - built?, 4 - connected?
 	
+	//this is the routes we will contruct
 	local routes = RoutePlanner.getMinSpanningRoutes();
 	
 	foreach(route in routes) {
@@ -46,15 +46,16 @@ function RoutePlanner::buildNetwork() {
 		}
 		
 		if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
-			ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
+			local new_route = ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
+			new_route.balanceRailService();
 		
 			if(base_regions[route[0]][4] == 0) {
-				ZooElite.ConnectBaseRegion(base_regions[route[0]]);
+				//ZooElite.ConnectBaseRegion(base_regions[route[0]]);
 				base_regions[route[0]][4] = 1;
 				
 			}
 			if(base_regions[route[1]][4] == 0) {
-				ZooElite.ConnectBaseRegion(base_regions[route[1]]);
+				//ZooElite.ConnectBaseRegion(base_regions[route[1]]);
 				base_regions[route[1]][4] = 1;
 				
 			}
