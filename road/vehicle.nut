@@ -112,9 +112,9 @@ function ZooElite::UpdateBusRoutesForTown(townId) {
 			//make it so
 			AIOrder.RemoveOrder(seed_vehicle, i);
 			if(first_stop == new_dest) {
-				AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_TRANSFER);
+				AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_NON_STOP_INTERMEDIATE);
 			} else {
-				AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_NONE);
+				AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_NON_STOP_INTERMEDIATE);
 			}
 		}
 	}
@@ -122,9 +122,9 @@ function ZooElite::UpdateBusRoutesForTown(townId) {
 		local dest = route.pop();
 		//TODO: Do we want any modifiers
 		if(first_stop == dest) {
-			AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_TRANSFER);
+			AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_NON_STOP_INTERMEDIATE);
 		} else {
-			AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_NONE);
+			AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_NON_STOP_INTERMEDIATE);
 		}
 	}
 }
