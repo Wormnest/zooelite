@@ -130,6 +130,8 @@ class Route {
 		LogManager.Log("rail station id1 is: " + railstation_id1,4);
 		LogManager.Log("rail station id2 is: " + railstation_id2,4);
 		
+		
+		//Got rid of AIOF_TRANSFER
 		local orders = AIOrder.GetOrderCount(seed_vehicle);
 		for(local i = 0; i < orders; i++) {
 			LogManager.Log("We're in the for loop? WTF", 4);
@@ -139,9 +141,9 @@ class Route {
 				//make it so
 				AIOrder.RemoveOrder(seed_vehicle, i);
 				if(first_stop == new_dest) {
-					AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_TRANSFER);
+					AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_NON_STOP_INTERMEDIATE);
 				} else {
-					AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_TRANSFER);
+					AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_NON_STOP_INTERMEDIATE);
 				}
 			}
 		}
@@ -152,10 +154,10 @@ class Route {
 			//TODO: Do we want any modifiers
 			if(first_stop == dest) {
 				LogManager.Log("Appending order1", 4);
-				AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_TRANSFER);
+				AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_NON_STOP_INTERMEDIATE);
 			} else {
 				LogManager.Log("Appending order2", 4);
-				AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_TRANSFER);
+				AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_NON_STOP_INTERMEDIATE);
 			}
 		}
 		
