@@ -139,9 +139,9 @@ class Route {
 				//make it so
 				AIOrder.RemoveOrder(seed_vehicle, i);
 				if(first_stop == new_dest) {
-					AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_NONE);
+					AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_TRANSFER);
 				} else {
-					AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_NONE);
+					AIOrder.InsertOrder(seed_vehicle, i, new_dest, AIOrder.AIOF_TRANSFER);
 				}
 			}
 		}
@@ -152,10 +152,10 @@ class Route {
 			//TODO: Do we want any modifiers
 			if(first_stop == dest) {
 				LogManager.Log("Appending order1", 4);
-				AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_NONE);
+				AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_TRANSFER);
 			} else {
 				LogManager.Log("Appending order2", 4);
-				AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_NONE);
+				AIOrder.AppendOrder(seed_vehicle, dest, AIOrder.AIOF_TRANSFER);
 			}
 		}
 		

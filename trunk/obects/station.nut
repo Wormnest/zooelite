@@ -44,6 +44,7 @@ class Station {
 			LogManager.Log(idx + " " + build_tile + " " + front_tile, 4);
 			if(AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId) == false) {
 				LogManager.Log("FAILED busstop", 4);
+				//this.bus_stops[idx] = null;
 			}
 			
 			AIRoad.BuildRoad(build_tile, front_tile);
