@@ -26,6 +26,9 @@ function ZooElite::AdjustBusesInTown(townId) {
 		local loads_per_month = 2;
 		local more_bus = Floor((shortfall / capacity) / loads_per_month);
 		LogManager.Log("Creating " + more_bus + " more buses for " + AITown.GetName(townId), 4);
+		if(vehicle_count + more_bus == 0) {  //fix this = sketch Cameron code
+			more_bus = 1;
+		}
 		ZooElite.CreateNewBusesInTown(more_bus, townId);
 		//TODO: Return and Budget?
 		//TODO: Saturation Point
@@ -77,6 +80,9 @@ function ZooElite::UpdateBusRoutesForTown(townId) {
 	local seed_vehicle = town.seed_bus_id;
 	
 	local station_list = ZooElite.GetBusStationsInCity(townId);
+	//station_list.append(station_table[town_table[townId].rail_station_id].bus_stops);
+	//station_list.RemoveValue(null);
+	
 	station_list.Valuate(AIStation.HasStationType, AIStation.STATION_TRAIN);
 	station_list.RemoveValue(1);
 	

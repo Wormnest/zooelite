@@ -35,6 +35,14 @@ function RoutePlanner::buildNetwork() {
 	//this is the routes we will contruct
 	local routes = RoutePlanner.getMinSpanningRoutes();
 	
+	
+	/*while(AICompany.GetBankBalance(AICompany.COMPANY_SELF) < 100000) {
+		this.Sleep(200);
+		LogManager.Log("waiting for money", 4);
+		local next_task = task_list[i];
+		next_task.Exectute();
+		i++; 
+	}*/
 	foreach(route in routes) {
 		if(base_regions[route[0]][3] == 0) {
 			base_regions[route[0]][2] = ZooElite.BuildBaseStation(base_regions[route[0]][1], base_regions[route[0]][0], 0);
@@ -47,18 +55,25 @@ function RoutePlanner::buildNetwork() {
 		
 		if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
 			local new_route = ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
-			new_route.balanceRailService();
+			if(new_route) {
+				new_route.balanceRailService();
+			}
 		
 			if(base_regions[route[0]][4] == 0) {
-				//ZooElite.ConnectBaseRegion(base_regions[route[0]]);
+				ZooElite.ConnectBaseRegion(base_regions[route[0]]);
 				base_regions[route[0]][4] = 1;
 				
 			}
 			if(base_regions[route[1]][4] == 0) {
-				//ZooElite.ConnectBaseRegion(base_regions[route[1]]);
+				ZooElite.ConnectBaseRegion(base_regions[route[1]]);
 				base_regions[route[1]][4] = 1;
 				
 			}
+		}
+		
+		while(AICompany.GetBankBalance(AICompany.COMPANY_SELF) < 100000) {
+			this.Sleep(200);
+			LogManager.Log("waiting for money", 4);
 		}
 	}		
 

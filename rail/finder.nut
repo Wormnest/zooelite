@@ -1143,7 +1143,15 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 		LogManager.Log("attempting to connect to base station " + baseStation, 4);
 		station_table[baseStation].connectStopsToTown(town)
 		town_table[town].rail_station_id = baseStation;
-		station_table[baseStation].serviced_cities.push(town);		
+		station_table[baseStation].serviced_cities.push(town);
+
+		//First build a center station, then additional ones...more efficent
+		ZooElite.BuildMaxBusStationsInTown(town, 1);
+		ZooElite.BuildMaxBusStationsInTown(town, 3);
+		//Add Depot
+		ZooElite.BuildDepotForTown(town);
+		//Add Buses
+		ZooElite.AdjustBusesInTown(town);
 	}
 	return baseStation;
 }
