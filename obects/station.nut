@@ -42,6 +42,8 @@ class Station {
 		foreach(idx, build_tile in this.bus_stops) {
 			local front_tile = bus_front_tiles[idx];
 			LogManager.Log(idx + " " + build_tile + " " + front_tile, 4);
+			Sign(build_tile, "BUSSTOP" + idx);
+			Sign(front_tile, "FRONT" + idx);
 			if(AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId) == false) {
 				LogManager.Log("FAILED busstop", 4);
 				//this.bus_stops[idx] = null;

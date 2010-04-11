@@ -23,12 +23,40 @@ function ZooElite::AdjustBusesInTown(townId) {
 		local shortfall = production * CITY_BUS_CAPACITY_TARGET - transported;
 		// How many more buses do we need?
 		local capacity = AIEngine.GetCapacity(GetBestEngine(GetPassengerCargoID()));
-		local loads_per_month = 2;
-		local more_bus = Floor((shortfall / capacity) / loads_per_month);
+		
+		//Attempt to compute loads per month
+		local town = town_table[townId];
+		local stationId = town.rail_station_id;
+		local stops = station_table[stationId].bus_stops;
+		local tile = stops.pop();
+		local distance = AITown.GetDistanceManhattanToTile(townId, tile);
+		
+		local station_list = ZooElite.GetBusStationsInCity(townId);
+		station_list.Valuate(AIStation.HasStationType, AIStation.STATION_TRAIN);
+		station_list.RemoveValue(1);
+		local num_stations = station_list.Count();
+		
+		local loads_per_month = 40 / (distance + num_stations * 10);
+		if(loads_per_month < 1)
+			loads_per_month = 1;
+			
+		local saturation_point = distance / 5 * SATURATION_CONSTANT + num_stations * 2;
+		LogManager.Log("Analysis - Shortfall: " + shortfall + " Capacity: " + capacity + " Loads: " + Ceiling(loads_per_month) + " Saturation Point: " + saturation_point, 4);
+		local more_bus = Ceiling((shortfall / capacity) / loads_per_month);
+		
+		
+		if(vehicle_count + more_bus > saturation_point) {
+			more_bus = saturation_point - vehicle_count;
+		}
 		LogManager.Log("Creating " + more_bus + " more buses for " + AITown.GetName(townId), 4);
 		if(vehicle_count + more_bus == 0) {  //fix this = sketch Cameron code
-			more_bus = 1;
+			//more_bus = 1;
 		}
+		
+		
+		
+		
+		
 		ZooElite.CreateNewBusesInTown(more_bus, townId);
 		//TODO: Return and Budget?
 		//TODO: Saturation Point
