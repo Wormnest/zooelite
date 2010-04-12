@@ -60,13 +60,14 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 	
 	//TODO: IMPORTANT: Improve this algorithm, we otherwise restrict the search too much when things are close to the edge, maybe we should expand in the other directions?
 	//Ensure we aren't analyzing off the map as this will cause issues
-	if(AIMap.DistanceFromEdge(AITown.GetLocation(townId)) < searchRadius + square_x || AIMap.DistanceFromEdge(AITown.GetLocation(townId)) < searchRadius + square_y) {
+	//SafeAddRectangle(tilelist, seed_tile, searchRadius);
+	
 		//We need to manually define the radius
-		SafeAddRectangle(tilelist, AITown.GetLocation(townId), searchRadius);
-		/*
-		local left_dist = AIMap.GetTileX(seed_tile);
+		//SafeAddRectangle(tilelist, seed_tile, searchRadius);
+		
+		local left_dist = AIMap.GetTileX(seed_tile) - 2;
 		local right_dist = AIMap.GetMapSizeX() - 2 - left_dist;
-		local top_dist = AIMap.GetTileY(seed_tile);
+		local top_dist = AIMap.GetTileY(seed_tile) - 2;
 		local bot_dist = AIMap.GetMapSizeY() - 2 - top_dist;
 		LogManager.Log("Left, Right, Up, Down: " + left_dist + " " + right_dist + " " + top_dist + " " + bot_dist, 1);
 		if(searchRadius + square_x < left_dist) 
@@ -84,13 +85,6 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 		tilelist.AddRectangle(top_corner,bot_corner);
 		Sign(top_corner, "Search Corner 1");
 		Sign(bot_corner, "Search Corner 2");
-		*/
-	} else {
-		tilelist.AddRectangle(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) - searchRadius - square_x, AIMap.GetTileY(seed_tile) - searchRadius - square_y),
-							AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) + searchRadius, AIMap.GetTileY(seed_tile) + searchRadius)); 
-		Sign(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) - searchRadius - square_x, AIMap.GetTileY(seed_tile) - searchRadius - square_y), "Search Corner 1");
-		Sign(AIMap.GetTileIndex(AIMap.GetTileX(seed_tile) + searchRadius, AIMap.GetTileY(seed_tile) + searchRadius), "Search Corner 2");
-	}
 	
 	
 
@@ -176,9 +170,9 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 	
 	
 	//The below routines run through different possible station orientations and configurations to find the most viable one
-	
+	local result = false;
 	if(is_terminus) {
-		while(verticletilelist.Count() > 0 || tilelist.Count() > 0) {
+		while((verticletilelist.Count() > 0 || tilelist.Count() > 0) && result == false) {
 			
 			local top_left_tile = null;
 			local horizontal = true;
@@ -202,18 +196,22 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 				top_left_tile = horz_propisiton;
 			}
 			
+			
 			if(horizontal) {
 				local spot2 = GetTileRelative(top_left_tile, square_y, square_x);
 				local spot1 = GetTileRelative(top_left_tile, 0, 0);
 				if(canBuildRectangleAtCorner(spot1, 1, -DOWN_TRACK_SPACE) && 
 						(verticletilelist.Count() + tilelist.Count() == 1 ||
 						AIMap.DistanceManhattan(spot1, direction_of_tileId) < AIMap.DistanceManhattan(spot2, direction_of_tileId) + RAILSTATION_IN_DIRECTION_OF_FLEX)) {
-						return ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);						
+						result = ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);						
 				} else if(canBuildRectangleAtCorner(spot2, -1, DOWN_TRACK_SPACE) && 
 						(verticletilelist.Count() + tilelist.Count() == 1 ||
 							AIMap.DistanceManhattan(spot2, direction_of_tileId) < AIMap.DistanceManhattan(spot1, direction_of_tileId) + RAILSTATION_IN_DIRECTION_OF_FLEX)) {
-						return ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
+						result = ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
 				} else {
+					tilelist.RemoveTop(1);
+				}
+				if(result == false) {
 					tilelist.RemoveTop(1);
 				}
 			} else {
@@ -223,12 +221,15 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 						(verticletilelist.Count() + tilelist.Count() == 1 ||
 							AIMap.DistanceManhattan(spot1, direction_of_tileId) < AIMap.DistanceManhattan(spot2, direction_of_tileId) + RAILSTATION_IN_DIRECTION_OF_FLEX)) {
 							
-					return ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);				
+					result = ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, true);				
 				} else if(canBuildRectangleAtCorner(spot2, DOWN_TRACK_SPACE, 1) && 
 						(verticletilelist.Count() + tilelist.Count() == 1 || 
 							AIMap.DistanceManhattan(spot2, direction_of_tileId) < AIMap.DistanceManhattan(spot1, direction_of_tileId) + RAILSTATION_IN_DIRECTION_OF_FLEX)) {
-					return ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
+					result = ZooElite.BuildTrainStation(townId, top_left_tile, platforms, is_terminus, horizontal, false);						
 				} else {
+					verticletilelist.RemoveTop(1);
+				}
+				if(result == false) {
 					verticletilelist.RemoveTop(1);
 				}
 			}
@@ -236,7 +237,7 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 		}
 		//Run through for through-stations...little more difficult
 	} else {
-		while(verticletilelist.Count() > 0 || tilelist.Count() > 0) {
+		while((verticletilelist.Count() > 0 || tilelist.Count() > 0) && result == false) {
 			//LogManager.Log("Found " + verticletilelist.Count() + " " + tilelist.Count() + " locations for " +  AITown.GetName(townId), 4);
 			local top_left_tile = null;
 			local horizontal = true;
@@ -268,16 +269,16 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 				//   /--PPPPPPP--\
 				//2-/---PPPPPPP---\--4
 				// -/---PPPPPPP----\-
-				Sign(top_left_tile, "TL");
+				//Sign(top_left_tile, "TL");
 				local spot1 = GetTileRelative(top_left_tile, 2, 0);
 				local spot2 = GetTileRelative(spot1, platforms - 2, 0);				
 				local spot3 = GetTileRelative(spot1, 0, square_x + 1);
 				local spot4 = GetTileRelative(spot3, platforms - 2, 0);	
 				
-				Sign(spot1, "1");
-				Sign(spot2, "2");
-				Sign(spot3, "3");
-				Sign(spot4, "4");
+				//Sign(spot1, "1");
+				//Sign(spot2, "2");
+				//Sign(spot3, "3");
+				//Sign(spot4, "4");
 					
 				local left_bot_bool = null;
 				local right_bot_bool = null;
@@ -309,7 +310,10 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 					tilelist.RemoveTop(1);
 					continue;
 				}
-				return BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);							
+				result = BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);	
+				if(result == false) {
+					tilelist.RemoveTop(1);
+				}						
 
 			} else {
 				//vertical
@@ -346,17 +350,18 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 					verticletilelist.RemoveTop(1);
 					continue;
 				}
-				return ZooElite.BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);
-				
-				return ZooElite.BuildRegionalStation(top_left_tile, platforms, horizontal, false, 1, 1);						
-
+				result = ZooElite.BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);		
+				if(result == false) {
+					verticletilelist.RemoveTop(1);
+				}
 			}
-			return ZooElite.BuildRegionalStation(top_left_tile, platforms, horizontal, false, left_bot_bool, right_bot_bool);
-			
 		}
 	}
-	LogManager.Log("Unable to find any station placements", 5);
-	return false;
+	if(result == false) {
+		LogManager.Log("Unable to find any station placements", 5);
+		return false;
+	}
+	return result;
 		
 	/*
 	//Lastly, asess the tiles in the order of closest to in direct line OR COST TO LEVEL
@@ -408,7 +413,7 @@ function CostToLevelRectangle(tileId, square_x, square_y) {
 		tiles.KeepValue(0);
 		if(tiles.Count() == prev_count)
 			return 1;
-		if(!AITile.LevelTiles(tileId, GetTileRelative(tileId, square_x, square_y)))
+		if(!LevelLand(GetTileRelative(tileId, -1, -1), GetTileRelative(tileId, square_x, square_y)))
 			return -1;
 
 		level_cost = account.GetCosts();
@@ -446,7 +451,13 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 	AITile.DemolishTile(GetTileRelative(top_left_tile, width, height));
 	Sign(GetTileRelative(top_left_tile, 0, 0), "Corner 1");
 	Sign(GetTileRelative(top_left_tile, width, height), "Corner 2");
-	AITile.LevelTiles(top_left_tile, GetTileRelative(top_left_tile, width, height));
+	local level_result = AITile.LevelTiles(top_left_tile, GetTileRelative(top_left_tile, width, height));
+	local level_result = LevelLand(top_left_tile, GetTileRelative(top_left_tile, width, height));
+	if(level_result == false) {
+		LogManager.Log("Unable to level tiles for station", 4);
+		return false;
+	}
+	
 	
 	//TODO: Set railtype that we're using, how does this change?
 	local types = AIRailTypeList();
@@ -581,7 +592,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 				build_tile = false;
 				this_station.bus_front_tiles.push(front_tile);
 				this_station.bus_stops.push(active_tile);
-				Sign(active_tile, "BS");
+				//Sign(active_tile, "BS");
 			} else {
 				build_tile = true;
 			}
@@ -723,7 +734,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 				build_tile = false;
 				this_station.bus_front_tiles.push(front_tile);
 				this_station.bus_stops.push(active_tile);
-				Sign(active_tile, "BS");
+				//Sign(active_tile, "BS");
 			} else {
 				build_tile = true;
 			}
