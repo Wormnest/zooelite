@@ -1,7 +1,7 @@
 class Route {
 
-	railstation_id1 = null;
-	railstation_id2 = null;
+	//railstation_id1 = null;
+	//railstation_id2 = null;
 	depot_tile = null;
 	
 	routeId = null;
@@ -14,12 +14,15 @@ class Route {
 	servicedStations = null;
 
 	constructor(r_id1, r_id2, depot) {
-		this.railstation_id1 = r_id1;
-		this.railstation_id2 = r_id2;	
+		//this.railstation_id1 = r_id1;
+		//this.railstation_id2 = r_id2;	
+		
 		this.depot_tile = depot;
 		this.routeRailType = AIRail.GetCurrentRailType();
 		this.includedPaths = [];
-		servicedStations = [];
+		this.servicedStations = [];
+		this.servicedStations.push(r_id1);
+		this.servicedStations.push(r_id2);
 		routeDistance = 0;
 	}
 	
@@ -29,17 +32,22 @@ class Route {
 		
 		if(this.groupId != null) {
 			local vehicles = AIVehicleList_Group(this.groupId);
-			AIVehicle.GetProfitLastYear();
+			local profit = AIVehicle.GetProfitLastYear(this.seedVehicle);
 			local waiting = 0;
 			foreach(station in servicedStations) {
 				waiting += AIStation.GetCargoWaiting(station, GetPassengerCargoID());
 			}
 			
-			local vehicle_capacity = AIVechicle.GetCapacity(seedVehicle, GetPassengerCargoID());
-			local route_capacity = vehicles.Count() * vehicle_capacity / (routeDistance / 200);
-			add_vehicles = (waiting - route_capacity) / vehicle_capacity;
+			local vehicle_capacity = AIVehicle.GetCapacity(seedVehicle, GetPassengerCargoID());
+			local distance_modifier = routeDistance * 2 / 50;
+			if(distance_modifier < 1) {
+				distance_modifier = 1;
+			}
+			local route_capacity = vehicles.Count() * vehicle_capacity / distance_modifier;
+			add_vehicles = floor((waiting - route_capacity) / vehicle_capacity);
 			if(add_vehicles == 0) {
-				LogManager.Log("Route analyzed. No more trains need to be added");
+				LogManager.Log("Route analyzed. No more trains need to be added", 3);
+				this.lastUpdated = ZooElite.GetTick();
 				return true;
 			}
 		
@@ -122,19 +130,39 @@ class Route {
 	//TODO: This also ruins the current orders since I don't think we have an "origin" station which will cause all the trains to go weird places
 	function updateOrders() {
 		local seed_vehicle = this.seedVehicle;
-		local station_list = [railstation_id1, railstation_id2];
+		//local station_list = [railstation_id1, railstation_id2];
+		local station_list = this.servicedStations;
 		
 		//TODO: Lookup this towns train station and pass it as first stop
-		local first_stop = railstation_id2;
-		local route = [railstation_id1, railstation_id2];//TravelingSalesman(first_stop, station_list);
-		LogManager.Log("rail station id1 is: " + railstation_id1,4);
-		LogManager.Log("rail station id2 is: " + railstation_id2,4);
+		//local first_stop = railstation_id1;
+		//local route = [railstation_id1, railstation_id2];
+		local first_stop = station_list.pop();
 		
+		LogManager.Log("Travelling Salesman, start: " + first_stop + " Addn'l Stops: " + station_list.len(), 4);
+		local route = TravelingSalesman2(first_stop, station_list);
+		station_list.push(first_stop);
+		//LogManager.Log("rail station id1 is: " + railstation_id1,4);
+		//LogManager.Log("rail station id2 is: " + railstation_id2,4);
+		
+		
+		//Determine the new distances for route balancing purposes
+		local last_stop = false;
+		this.routeDistance = 0;
+		foreach(idx, place in route) {
+			if(last_stop != false) {
+				this.routeDistance += AIMap.DistanceManhattan(last_stop, place);
+			}
+			last_stop = place;
+		}
 		
 		//Got rid of AIOF_TRANSFER
+		while(AIOrder.GetOrderCount(seed_vehicle) > 0) {
+			AIOrder.RemoveOrder(seed_vehicle, 0);
+		}
+		/*
 		local orders = AIOrder.GetOrderCount(seed_vehicle);
 		for(local i = 0; i < orders; i++) {
-			LogManager.Log("We're in the for loop? WTF", 4);
+			//LogManager.Log("We're in the for loop? WTF", 4);
 			local this_dest = AIOrder.GetOrderDestination(seed_vehicle, i);
 			local new_dest = route.pop();
 			if(this_dest != new_dest) {
@@ -147,6 +175,8 @@ class Route {
 				}
 			}
 		}
+		*/
+		
 		LogManager.Log("the route length is: " + route.len(), 4);
 		while(route.len() > 0) {
 			LogManager.Log("in while loop adding first trains", 4);

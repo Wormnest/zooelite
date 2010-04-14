@@ -439,3 +439,40 @@ function TravelingSalesman(start, list) {
 	}
 	return route;
 }
+
+
+/**
+*	Implementation of the TSP using a greedy algorithm beginning and ending at start
+*	Returns: An ordered list of the quickest route
+*	Start and all items in list should be tiles
+*	Will restore list to it's original un-ordered state (kind of)
+*/
+function TravelingSalesman2(start, list) {
+	local route = [];
+	route.push(start);
+	local cur_loc = start;
+	while(list.len() > 0) {
+		local cur_closest = 9999;
+		local top_idx = -1;
+		local next_stop = 0;
+		foreach(idx, place in list) {
+			local this_result = AIStation.GetDistanceManhattanToTile(place, cur_loc);
+			if(this_result < cur_closest) {
+				top_idx = idx;
+				next_stop = place;
+				cur_closest = this_result;				
+			}
+		}
+		route.push(next_stop);
+		list.remove(top_idx);
+		cur_loc = next_stop;
+	}
+	
+	foreach(idx, place in route) {
+		if(place != start) {
+			list.push(place);			
+		}
+	}
+	
+	return route;
+}

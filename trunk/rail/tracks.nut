@@ -316,9 +316,47 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			
 			local depot = double_railroad.first_depot_tile;
 			
-			local new_route = Route(stationId1, stationId2, depot);
-			route_table.push(new_route);
-			return new_route;
+			local station1_route_count = 0;
+			local station2_route_count = 0;
+			
+			if(station1.lines == null) {
+				//new station
+				station1.lines = [];
+			} else {
+				//already must be connected
+				station1_route_count = station1.lines.len();
+			}
+			if(station2.lines == null) {
+				//new station
+				station2.lines = [];
+			} else {
+				station2_route_count = station2.lines.len();
+			}
+			
+			LogManager.Log(AITown.GetName(AITile.GetClosestTown(station1.station_tile)) + " has " + station1_route_count + " and " + AITown.GetName(AITile.GetClosestTown(station2.station_tile)) + " has " + station2_route_count, 4);
+			
+			local route = null;
+			if((station1_route_count == 0 && station2_route_count == 0) || junction_1 || junction_2) {
+				route = Route(stationId1, stationId2, depot);
+				station1.lines.push(route);
+				station2.lines.push(route);
+				route_table.push(route);
+			} else if(station1_route_count > 0 && station2_route_count == 0) {
+				route = station1.lines.pop();
+				route.servicedStations.push(stationId2);
+				route.updateOrders();
+				station1.lines.push(route);
+				station2.lines.push(route);
+			} else if(station1_route_count == 0 && station2_route_count > 0) {
+				route = station2.lines.pop();
+				route.servicedStations.push(stationId1);
+				route.updateOrders();
+				station1.lines.push(route);
+				station2.lines.push(route);
+			}
+			
+			
+			return route;
 			
 			/*LogManager.Log("the tile for station1 path is: " + double_railroad.path.tile, 4);
 			Sign(double_railroad.path.tile, "pathTile");
