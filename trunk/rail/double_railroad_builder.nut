@@ -703,16 +703,21 @@ function DoubleRailroadBuilder::BuildTrack() {
 	local double_railroad = DoubleRailroad();
 	double_railroad.path = final_path;
 
-	/* Build the depots. */
-	/*double_railroad.first_depot_tile = DoubleDepotBuilder.BuildDepots(final_path , 90 , false);
-	double_railroad.last_depot_tile = DoubleDepotBuilder.BuildDepots(final_path , 90 , true);
+	/* Build the depot. */
+	//double_railroad.first_depot_tile = DoubleDepotBuilder.BuildDepots(final_path , 90 , false);
+	//double_railroad.last_depot_tile = DoubleDepotBuilder.BuildDepots(final_path , 90 , true);
 
-	if(double_railroad.first_depot_tile == null || double_railroad.last_depot_tile == null){
+	/*if(double_railroad.first_depot_tile == null || double_railroad.last_depot_tile == null){
 		LogManager.Log("DoubleRailroadBuilder::BuildTrack: Could not build the depots.", 4);
 		DemolishDoubleRailroad(final_path);
 		return null;
 	}
 */
+
+	if(!(double_railroad.first_depot_tile = DoubleDepotBuilder.BuildDepots(double_railroad.path, 100000, true))) {
+		LogManager.Log("Second choice depot", 4);
+		double_railroad.first_depot_tile = DoubleDepotBuilder.BuildDepots(double_railroad.path, 100000, false);
+		}
 	/* Build the signals. */
 	BuildSignals(final_path , 3);
 

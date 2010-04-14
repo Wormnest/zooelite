@@ -66,7 +66,7 @@ function RoutePlanner::buildNetwork() {
 		if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
 			local new_route = ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
 			if(new_route) {
-				//new_route.balanceRailService();
+				new_route.balanceRailService();
 			}
 		
 			if(base_regions[route[0]][4] == 0) {
