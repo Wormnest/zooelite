@@ -28,6 +28,8 @@ class Station {
 		station_dir = null;
 		//says whether the station has been incorperated into the grid yet.
 		routes = null;
+		//List of logical lines/routes this station is a part of
+		lines = null;
 		
 	constructor() {
 		
@@ -44,7 +46,7 @@ class Station {
 			LogManager.Log(idx + " " + build_tile + " " + front_tile, 4);
 			if(AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId) == false) {
 				if(AIError.GetLastErrorString() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
-					LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
+					LogManager.Log("Town authority are being jerks, sending appeasement trees", 4);
 					ImproveRating(AITile.GetClosestTown(build_tile), build_tile, front_tile);
 					local success = AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId);
 					if(!success) {
