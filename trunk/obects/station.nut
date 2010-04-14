@@ -43,8 +43,18 @@ class Station {
 			local front_tile = bus_front_tiles[idx];
 			LogManager.Log(idx + " " + build_tile + " " + front_tile, 4);
 			if(AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId) == false) {
-				LogManager.Log("FAILED busstop", 4);
-				LogManager.Log(AIError.GetLastErrorString(), 4);
+				if(AIError.GetLastErrorString() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+					LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
+					ImproveRating(AITile.GetClosestTown(build_tile), build_tile, front_tile);
+					local success = AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId);
+					if(!success) {
+						LogManager.Log("Roll to save bus stop failed: " + AIError.GetLastErrorString(), 4);
+						return false;
+					}
+				} else {
+					LogManager.Log("FAILED busstop", 4);
+					LogManager.Log(AIError.GetLastErrorString(), 4);
+				}
 				//this.bus_stops[idx] = null;
 			}
 			
