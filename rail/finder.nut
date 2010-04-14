@@ -451,7 +451,8 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 	AITile.DemolishTile(GetTileRelative(top_left_tile, width, height));
 	Sign(GetTileRelative(top_left_tile, 0, 0), "Corner 1");
 	Sign(GetTileRelative(top_left_tile, width, height), "Corner 2");
-	local level_result = AITile.LevelTiles(top_left_tile, GetTileRelative(top_left_tile, width, height));
+	local corner1 = top_left_tile;
+	local corner2 = GetTileRelative(top_left_tile, width, height);
 	local level_result = LevelLand(top_left_tile, GetTileRelative(top_left_tile, width, height));
 	if(level_result == false) {
 		LogManager.Log("Unable to level tiles for station", 4);
@@ -476,8 +477,18 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 		local success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 
 		if(!success) {
-			LogManager.Log(AIError.GetLastErrorString(), 4);
-			return false;
+			if(AIError.GetLastErrorString() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
+				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
+				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
+				if(!success) {
+					LogManager.Log("Roll to save failed: " + AIError.GetLastErrorString(), 4);
+					return false;
+				}
+			} else {
+				LogManager.Log(AIError.GetLastErrorString(), 4);
+				return false;
+			}
 		}
 		
 		stationId = AIStation.GetStationID(top_left_tile);
@@ -610,8 +621,18 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 		local success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NE_SW, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 
 		if(!success) {
-			LogManager.Log(AIError.GetLastErrorString(), 4);
-			return false;
+			if(AIError.GetLastErrorString() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
+				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
+				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
+				if(!success) {
+					LogManager.Log("Roll to save failed: " + AIError.GetLastErrorString(), 4);
+					return false;
+				}
+			} else {
+				LogManager.Log(AIError.GetLastErrorString(), 4);
+				return false;
+			}
 		}
 		stationId = AIStation.GetStationID(top_left_tile);
 		
