@@ -2282,9 +2282,10 @@ function DoubleTrackParts::RemoveDoublePartSignals(tile , part_index){
 
 
 		if(parts[part_index].signal_senses[i] == RailroadCommon.INVALID_SENSE) continue;
-		if(!RailroadCommon.RemoveSignal(tile + parts[part_index].sections[i].offset ,
+		//if(!
+		RailroadCommon.RemoveSignal(tile + parts[part_index].sections[i].offset ,
 			parts[part_index].sections[i].track ,
-			parts[part_index].signal_senses[i])) return false;
+			parts[part_index].signal_senses[i]); //return false;
 	}
 	return true;
 }

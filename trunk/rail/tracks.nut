@@ -299,7 +299,7 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			double_railroad = null;
 		}
 		
-		if(double_railroad != null) {
+		if(double_railroad != null && double_railroad != false) {
 			if(!junction_1) {
 				station1.routes[dirIndex1[f1]] = double_railroad.path;
 			}

@@ -138,33 +138,33 @@ function RailroadCommon::RemoveSignal(tile , rail_track , sense){
 
 		case AIRail.RAILTRACK_NW_NE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , 1);
+				front_tile += AIMap.GetTileIndex(-1 , 0);
 			}else{
-				front_tile += AIMap.GetTileIndex(1 , 0);
+				front_tile += AIMap.GetTileIndex(0 , -1);
 			}
 		break;
 
 		case AIRail.RAILTRACK_SW_SE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(-1 , 0);
+				front_tile += AIMap.GetTileIndex(0 , 1);
 			}else{
-				front_tile += AIMap.GetTileIndex(0 , -1);
+				front_tile += AIMap.GetTileIndex(1 , 0);
 			}
 		break;
 
 		case AIRail.RAILTRACK_NW_SW:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , 1);
-			}else{
 				front_tile += AIMap.GetTileIndex(-1 , 0);
+			}else{
+				front_tile += AIMap.GetTileIndex(0 , 1);
 			}
 		break;
 
 		case AIRail.RAILTRACK_NE_SE:
 			if(sense == RailroadCommon.CLOCKWISE){
-				front_tile += AIMap.GetTileIndex(0 , -1);
+				front_tile += AIMap.GetTileIndex(0 , 1);
 			}else{
-				front_tile += AIMap.GetTileIndex(1 , 0);
+				front_tile += AIMap.GetTileIndex(-1 , 0);
 			}
 		break;
 	}

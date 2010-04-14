@@ -16,6 +16,7 @@ require("helper.nut");
 //require("rail/tracks.nut");
 require("obects/town.nut");
 require("obects/station.nut");
+require("RouteChooser.nut");
 
 
 class RoutePlanner	{
@@ -33,17 +34,26 @@ function RoutePlanner::buildNetwork() {
 	//0 - center, 1- towns, 2 - stationid, 3 - built?, 4 - connected?
 	
 	//this is the routes we will contruct
-	local routes = RoutePlanner.getMinSpanningRoutes();
+	//local routes = RoutePlanner.getMinSpanningRoutes();
+	local route_chooser = RouteChooser(base_regions);
+	//local routes = RoutePlanner.getTopRoutes();
 	
-	
-	/*while(AICompany.GetBankBalance(AICompany.COMPANY_SELF) < 100000) {
+	while(AICompany.GetBankBalance(AICompany.COMPANY_SELF) < 100000) {
 		this.Sleep(200);
 		LogManager.Log("waiting for money", 4);
 		local next_task = task_list[i];
 		next_task.Exectute();
 		i++; 
-	}*/
-	foreach(route in routes) {
+	}
+	local route_count = 0;
+	while(route_count < route_chooser.max_routes) {
+		route_count ++;
+		local route = route_chooser.getNextRoute();
+		if(route == null) {
+			LogManager.Log("holy shit finished all the routes!", 4);
+			break;
+		}
+	
 		if(base_regions[route[0]][3] == 0) {
 			base_regions[route[0]][2] = ZooElite.BuildBaseStation(base_regions[route[0]][1], base_regions[route[0]][0], 0);
 			base_regions[route[0]][3] = 1;
@@ -56,16 +66,16 @@ function RoutePlanner::buildNetwork() {
 		if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
 			local new_route = ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
 			if(new_route) {
-				new_route.balanceRailService();
+				//new_route.balanceRailService();
 			}
 		
 			if(base_regions[route[0]][4] == 0) {
-				ZooElite.ConnectBaseRegion(base_regions[route[0]]);
+				//ZooElite.ConnectBaseRegion(base_regions[route[0]]);
 				base_regions[route[0]][4] = 1;
 				
 			}
 			if(base_regions[route[1]][4] == 0) {
-				ZooElite.ConnectBaseRegion(base_regions[route[1]]);
+				//ZooElite.ConnectBaseRegion(base_regions[route[1]]);
 				base_regions[route[1]][4] = 1;
 				
 			}
@@ -737,31 +747,29 @@ function RoutePlanner::getMinSpanningRoutes() {
 //##########################################################################################################
 //##########################################################################################################
 
-//regions[0] = regional centers, regions[1] = list of towns in each region
-function RoutePlanner::getTopRoutes(regions) {
-
+//each route holds: base region 1, base region 2, distance?
+function RoutePlanner::getTopRoutes() {
+	
 	//list of regional populations - saves time to precalculate:
-	local regionalPops = array(regions[0].len(), 0);
-	for(local i = 0; i < regions[0].len(); i += 1) {
-		foreach(town in regions[1][i]) {
-			regionalPops[i] += AITown.GetPopulation(town);
+	local regional_pops = array(base_regions.len(), 0);
+	for(local i = 0; i < base_regions.len(); i += 1) {
+		foreach(town in base_regions[i][1]) {
+			regional_pops[i] += AITown.GetPopulation(town);
 		}
 	}
 	
+
 	//list of all possible regional routes
-	local possibleRoutes = []; //array((regions[0].len()*(regions[0].len()-1))/2, null);
-	LogManager.Log("possible routes length: " + possibleRoutes.len(), 4);
+	local possibleRoutes = [];
 	
-	//each route has region1, region2, added?, shortest current path in graph, population connected by route, route length,
-	//if route length is  > 256 then we're gonna through it out to save time
 	local c = 0;
 	//in this loop we initialize possible routes
-	for(local i = 0; i < regions[0].len(); i += 1) {
-		for(local j = i + 1; j < regions[0].len(); j += 1) {
+	for(local i = 0; i < base_regions.len(); i += 1) {
+		for(local j = i + 1; j < base_regions.len(); j += 1) {
 			local region1 = i;
 			local region2 = j;
-			local totalPop = regionalPops[i] + regionalPops[j];
-			local distance = SquareRoot(AIMap.DistanceSquare(regions[0][i], regions[0][j]));
+			local totalPop = regional_pops[i] + regional_pops[j];
+			local distance = SquareRoot(AIMap.DistanceSquare(base_regions[i][0], base_regions[j][0]));
 			
 			//now decide whether to add route:
 			if(distance > 0) { // < 250) {
@@ -783,7 +791,7 @@ function RoutePlanner::getTopRoutes(regions) {
 	
 	local regionalRoutes = [];
 	//basically tells what connected piece of the graph a node is in
-	local clusters = array(regions[0].len(), null);
+	local clusters = array(base_regions.len(), null);
 	for(local i = 0; i < clusters.len(); i += 1) {
 		clusters[i] = i;
 	}
@@ -792,8 +800,9 @@ function RoutePlanner::getTopRoutes(regions) {
 		LogManager.Log("possible route from " + possibleRoutes[i][0] + " to " + possibleRoutes[i][1], 4);
 	}
 	
+	//MAJOR LOOP: LOOPUS MAXIMUS
 	//in this loop we add routes - the best first and then adjust the minpath for remaining routes and restart.
-	for(local i = 0; i < possibleRoutes.len(); i += 1) {
+	for(local i = 0; i < 10; i += 1) {
 		//holds the route we are currently planning on adding
 		local currentBest = 0;
 		local currentFlowImprovement = 0;
@@ -899,6 +908,20 @@ function RoutePlanner::getTopRoutes(regions) {
 		}	
 	}
 	
+	foreach(route in regionalRoutes) {
+		LogManager.Log("route from: " + route[0] + " to " + route[1] + " with length: " + route[2], 4);
+		
+		local Xinc =  AIMap.GetTileX(base_regions[route[0]][0]) - AIMap.GetTileX(base_regions[route[1]][0]);
+		local Yinc =  AIMap.GetTileY(base_regions[route[0]][0]) - AIMap.GetTileY(base_regions[route[1]][0]);
+
+		local curY = 20*AIMap.GetTileY(base_regions[route[1]][0]);
+		local curX = 20*AIMap.GetTileX(base_regions[route[1]][0]);
+		for(local i = 0; i < 21; i += 1) {
+			Sign(AIMap.GetTileIndex(curX/20, curY/20), "R");
+			curY += Yinc;
+			curX += Xinc;
+		}
+	}
 	return regionalRoutes;
 }
 
