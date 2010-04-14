@@ -78,9 +78,9 @@ class DoubleRailroadBuilder {
 	static TERRAFORM_COST = 25;
 	static FARM_COST = 0;
 	static BRIDGE_TILE_COST = 100;
-	static BRIDGE_MAX_LENGTH = 15;
+	static BRIDGE_MAX_LENGTH = 100;//15;
 
-	static PATHFINDING_TIME_OUT = 40; //(365 * 2.5).tointeger();/* days. */
+	static PATHFINDING_TIME_OUT = 100; //(365 * 2.5).tointeger();/* days. */
 	static PATHFINDING_ITERATIONS = 100000;
 
 	tile_from = null;

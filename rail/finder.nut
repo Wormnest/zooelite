@@ -1131,6 +1131,10 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 function ZooElite::BuildBaseStation(towns, top_left_tile, is_terminus) {
 	local center_tile = AIMap.GetTileIndex(AIMap.GetMapSizeX() / 2, AIMap.GetMapSizeY() / 2);
 	local baseStation = ZooElite.BuildRailStationForTown(towns.Begin(), top_left_tile, center_tile, towns.Count()+1, is_terminus);
+	if(baseStation != false) {
+		LogManager.Log("should be building bus stops", 4);
+		station_table[baseStation].buildBusStops();
+	}
 	return baseStation;
 }
 //Connnect a station to all the towns in a base region with busses
@@ -1143,19 +1147,18 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 		return false;
 		}
 	
-	local firstIter = true;
+	//local firstIter = true;
 	foreach(town in towns) {
-		if(firstIter) {
-			LogManager.Log("should be building bus stops", 4);
-			station_table[baseStation].buildBusStops();
+		/*if(firstIter) {
+			
 			firstIter = false;
-		}
+		}*/
 	
 		LogManager.Log("attempting to connect to base station " + baseStation, 4);
 		station_table[baseStation].connectStopsToTown(town)
 		town_table[town].rail_station_id = baseStation;
 		station_table[baseStation].serviced_cities.push(town);
-
+/*
 		//First build a center station, then additional ones...more efficent
 		ZooElite.BuildMaxBusStationsInTown(town, 1);
 		ZooElite.BuildMaxBusStationsInTown(town, 3);
@@ -1163,6 +1166,7 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 		ZooElite.BuildDepotForTown(town);
 		//Add Buses
 		ZooElite.AdjustBusesInTown(town);
+		*/
 	}
 	return baseStation;
 }

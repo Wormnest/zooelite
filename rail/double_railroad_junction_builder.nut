@@ -319,36 +319,43 @@ function DoubleJunctionBuilder::BuildJunctionPart(junction_information){
 	if(dtp.IsBend(part_index)){
 		tile = path.tile;
 		part_index = path.part_index;
-		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
+		//if(!
+		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
 
 		tile = path.parent_path.tile;
 		part_index = path.parent_path.part_index;
-		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
+		//if(!
+		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
 		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
 
 		tile = path.child_path.tile;
 		part_index = path.child_path.part_index;
-		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
+		//if(!
+		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
 		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
 
 	/* Lines and Diagonals.*/
 	}else{
 		tile = path.parent_path.tile;
 		part_index = path.parent_path.part_index;
-		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
+		//if(!
+		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
 
 		tile = path.tile;
 		part_index = path.part_index;
-		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
+		//if(!
+		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
 
 		tile = path.parent_path.parent_path.tile;
 		part_index = path.parent_path.parent_path.part_index;
-		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
+		//if(!
+		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
 		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
 
 		tile = path.child_path.tile;
 		part_index = path.child_path.part_index;
-		if(!dtp.RemoveDoublePartSignals(tile , part_index)) return false;
+		//if(!
+		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
 		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
 	}
 
