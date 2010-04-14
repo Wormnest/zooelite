@@ -307,12 +307,14 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 				station2.routes[dirIndex2[f2]] = double_railroad.path.reversePath();
 			}
 			
-			//local drrdb = DoubeDepotBuilder();
+			/*//local drrdb = DoubeDepotBuilder();
 			local depot;
 			if(!(depot = DoubleDepotBuilder.BuildDepots(double_railroad.path, 100000, true))) {
 				LogManager.Log("Second choice depot", 4);
 				depot = DoubleDepotBuilder.BuildDepots(double_railroad.path, 100000, false);
-			}
+			}*/
+			
+			local depot = double_railroad.first_depot_tile;
 			
 			local new_route = Route(stationId1, stationId2, depot);
 			route_table.push(new_route);
