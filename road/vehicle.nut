@@ -28,7 +28,7 @@ function ZooElite::AdjustBusesInTown(townId) {
 		local town = town_table[townId];
 		local stationId = town.rail_station_id;
 		local stops = station_table[stationId].bus_stops;
-		local tile = stops.pop();
+		local tile = stops[0]; //.pop() causes error after 3 towns.
 		local distance = AITown.GetDistanceManhattanToTile(townId, tile);
 		
 		local station_list = ZooElite.GetBusStationsInCity(townId);

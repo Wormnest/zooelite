@@ -30,7 +30,7 @@ class RouteChooser {
 				local distance = SquareRoot(AIMap.DistanceSquare(base_regions[i][0], base_regions[j][0]));
 			
 				//now decide whether to add route:
-				if(distance > 0) { // < 250) {
+				if(distance > 0 && distance < 200) {
 					local newRoute = array(6,0);
 					newRoute[0] = region1;
 					newRoute[1] = region2;

@@ -8,6 +8,7 @@ require("log_manager.nut");
 require("constants.nut");
 require("helper.nut");
 require("RoutePlanner.nut");
+require("Looper.nut");
 
 //trAIns shit
 require("rail/aystar.nut");
@@ -39,6 +40,7 @@ class ZooElite extends AIController {
 	base_regions = [];
 	dtp = null;
 	route_table = [];
+	added_towns = [];
 	
 	constructor(){
 		ai_instance = this;
@@ -95,7 +97,7 @@ function ZooElite::Start() {
 		AICompany.SetAutoRenewMonths(-3);
 		AICompany.SetAutoRenewStatus(true);
 	} else {
-		LogManager.Log("Breakdowns are off, so disabling autorenew");
+		LogManager.Log("Breakdowns are off, so disabling autorenew", 4);
 		AICompany.SetAutoRenewStatus(false);
 	}
 	
@@ -115,9 +117,9 @@ function ZooElite::Start() {
 		town_table[town] <- this_town;
 	}	
 	
-		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
 		ClearSigns();
-		RoutePlanner.buildNetwork();
+		//RoutePlanner.buildNetwork();
+		Looper.Loop();
 	
 		local town = towns.Begin();
 		local town2 = towns.Next();
