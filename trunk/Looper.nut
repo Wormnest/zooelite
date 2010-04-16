@@ -110,11 +110,11 @@ function Looper::Loop() {
 							continue;
 						}
 						
-						if(base_regions[route[0]][4] == 0) {
+						if(base_regions[route[0]][4] == 0 && new_route) {
 							ZooElite.ConnectBaseRegion(base_regions[route[0]]);
 							base_regions[route[0]][4] = 1;
 						}
-						if(base_regions[route[1]][4] == 0) {
+						if(base_regions[route[1]][4] == 0 && new_route) {
 							ZooElite.ConnectBaseRegion(base_regions[route[1]]);
 							base_regions[route[1]][4] = 1;
 						}
@@ -135,6 +135,12 @@ function Looper::Loop() {
 							}
 							new_route.balanceRailService();
 						}
+						else {   //the actual route failed.
+							route_chooser.unGetRoute();
+							LogManager.Log("Backtracked due to route failure", 4);
+							continue;
+						}
+
 		
 					}
 			}

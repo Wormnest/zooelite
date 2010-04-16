@@ -14,7 +14,7 @@ class RouteChooser {
 		this.regional_pops = array(base_regions.len(), 0);
 		for(local i = 0; i < base_regions.len(); i += 1) {
 			foreach(town in base_regions[i][1]) {
-				this.regional_pops[i] += AITown.GetPopulation(town);
+				this.regional_pops[i] += SquareRoot(AITown.GetPopulation(town));
 			}
 		}
 	
@@ -154,7 +154,7 @@ class RouteChooser {
 			LogManager.Log(this.regionalRoutes.len() + " possible route flowImprovement: " + flowImprovement + ", minpath: "  + this.possibleRoutes[j][3] + ", distance: " + this.possibleRoutes[j][5] + " from " + this.possibleRoutes[j][0] + " to " +this.possibleRoutes[j][1], 4);
 		}
 		//add best route
-		if(currentFlowImprovement < 10) {
+		if(currentFlowImprovement < 0) {
 			LogManager.Log("to small to add", 4);
 			return null;
 		}
@@ -175,7 +175,7 @@ class RouteChooser {
 		}	
 	
 		local route = this.possibleRoutes[currentBest];
-		this.last_route_index = [currentBest];
+		this.last_route_index = currentBest;
 		LogManager.Log("route from: " + route[0] + " to " + route[1] + " with length: " + route[2], 4);
 		
 		local Xinc =  AIMap.GetTileX(this.base_regions[route[0]][0]) - AIMap.GetTileX(this.base_regions[route[1]][0]);

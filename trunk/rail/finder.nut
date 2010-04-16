@@ -479,7 +479,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 		if(!success) {
 			if(AIError.GetLastErrorString() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
 				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
-				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
+				//ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
 				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 				if(!success) {
 					LogManager.Log("Roll to save failed: " + AIError.GetLastErrorString(), 4);

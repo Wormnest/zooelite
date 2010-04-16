@@ -66,6 +66,7 @@ class Route {
 			
 			//Put some wagons on it
 			for(local i = 0; i < 8; i++) {
+				LogManager.Log("Add cart to seed vehicle", 4);
 				local wagon = AIVehicle.BuildVehicle(this.depot_tile, GetBestRailWagon(GetPassengerCargoID(), this.routeRailType));
 				AIVehicle.MoveWagon(wagon, 0, this.seedVehicle, 0);
 			}
@@ -113,6 +114,7 @@ class Route {
 			local vehicle = AIVehicle.BuildVehicle(this.depot_tile, GetBestRailEngine(this.routeRailType));
 			//Put some wagons on it
 			for(local j = 0; j < 8; j++) {
+				LogManager.Log("Add cart to child vehicle", 4);
 				local wagon = AIVehicle.BuildVehicle(this.depot_tile, GetBestRailWagon(GetPassengerCargoID(), this.routeRailType));
 				AIVehicle.MoveWagon(wagon, 0, vehicle, 0);
 			}
