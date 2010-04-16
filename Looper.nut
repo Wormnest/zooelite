@@ -12,6 +12,7 @@ function Looper::Loop() {
 
 	local BUS_UPDATE = 2;
 	local BUILD_ROUTE = 1;
+	local MANAGE_FUNDS = 1;
 	
 	//first divide map into small regions
 	local towns = AITownList();
@@ -27,7 +28,19 @@ function Looper::Loop() {
 		LogManager.Log("Main Loop",4);
 		
 		counter++;
-	
+		
+		if(counter % MANAGE_FUNDS == 0) {
+			local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
+			while(balance > 80000) {
+				AICompany.SetLoanAmount(AICompany.GetLoanAmount() - AICompany.GetLoanInterval());
+				balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
+			}
+			while(balance < 50000) {
+				AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
+				balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
+			}
+		}
+				
 		if(counter % BUS_UPDATE == 0) {
 			foreach(town in added_towns) {
 				//ZooElite.AdjustBusesInTown(town);
@@ -75,6 +88,7 @@ function Looper::Loop() {
 						
 						if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
 							local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
+							LogManager.Log("Before tracking, balance is: " + balance, 4);
 							while(balance < 50000) {
 								LogManager.Log("Cash Low", 4);
 								if(AICompany.GetLoanAmount() + AICompany.GetLoanInterval() <= AICompany.GetMaxLoanAmount()) {
@@ -90,6 +104,12 @@ function Looper::Loop() {
 						
 							new_route = ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
 						}
+						else {   //one of the base stations failed so we aren't going to build the route
+							route_chooser.unGetRoute();
+							LogManager.Log("Backtracked due to bus failure", 4);
+							continue;
+						}
+						
 						if(base_regions[route[0]][4] == 0) {
 							ZooElite.ConnectBaseRegion(base_regions[route[0]]);
 							base_regions[route[0]][4] = 1;

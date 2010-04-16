@@ -344,13 +344,15 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			} else if(station1_route_count > 0 && station2_route_count == 0) {
 				route = station1.lines.pop();
 				route.servicedStations.push(stationId2);
-				//route.updateOrders();
+				route.balanceRailService();
+				route.updateOrders();
 				station1.lines.push(route);
 				station2.lines.push(route);
 			} else if(station1_route_count == 0 && station2_route_count > 0) {
 				route = station2.lines.pop();
 				route.servicedStations.push(stationId1);
-				//route.updateOrders();
+				route.balanceRailService();
+				route.updateOrders();
 				station1.lines.push(route);
 				station2.lines.push(route);
 			}

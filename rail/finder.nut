@@ -1170,8 +1170,12 @@ function ZooElite::BuildBaseStation(towns, top_left_tile, is_terminus) {
 	//////////////////////////
 		
 	if(baseStation != false) {
-		LogManager.Log("should be building bus stops", 4);
-		station_table[baseStation].buildBusStops();
+		//LogManager.Log("should be building bus stops", 4);
+		local bus_stop_success = station_table[baseStation].buildBusStops();
+		if(bus_stop_success == false) {
+			LogManager.Log("Station failed due to bus stops", 4);
+			return false;
+		}
 	}
 	return baseStation;
 }
@@ -1229,7 +1233,7 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 			}
 			else {
 				ZooElite.Sleep(500);
-				LogManager.Log("Wait for cash to build bus roads", 4);
+				LogManager.Log("Wait for cash to build bus stations in town " + town, 4);
 			}
 			balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
 		}
