@@ -634,19 +634,42 @@ function DoubleRailroadBuilder::BuildTrack() {
 
 				/* Bridge. */
 				if(path.part_index == DoubleTrackParts.BRIDGE){
-					if(!DoubleRailroadBuilder.BuildBridge(path.user_data)){
-						if(AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH)
-							enough_cash = false;
-						problem = true;
+					while(!DoubleRailroadBuilder.BuildBridge(path.user_data)){
+						if(AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH) {
+							LogManager.Log("Need to get cash in middle of route contruction", 4);
+							//enough_cash = false;
+							//problem = true;
+							while(balance < 50000) {
+								AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
+								balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
+							}
+							ZooElite.Sleep(500);
+						}
+						else {
+							problem = true;
+							break;
+						}
+						
 					}
 
 				/* Lines, Bends and Diagonals. */
 				}else{
-					if(!dtp.LandToBuildDoublePart(path.tile , path.part_index) ||
+					while(!dtp.LandToBuildDoublePart(path.tile , path.part_index) ||
 						!dtp.BuildDoublePart(path.tile , path.part_index)){
-						if(AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH)
-							enough_cash = false;
-						problem = true;
+						if(AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH) {
+							LogManager.Log("Need to get cash in middle of route contruction", 4);
+							//enough_cash = false;
+							//problem = true;
+							while(balance < 50000) {
+								AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
+								balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
+							}
+							ZooElite.Sleep(500);
+						}
+						else {
+							problem = true;
+							break;
+						}
 					}
 				}
 
