@@ -38,7 +38,7 @@ function getNumRoadNeighbors(tile_id) {
 	local sum = 0;
 	local list = GetNeighbours4(tile_id);
 	foreach(tile, index in list) {
-		if(AIRoad.IsRoadTile(tile))
+		if(AIRoad.IsRoadTile(tile) && AITile.GetMaxHeight(tile) == AITile.GetMaxHeight(tile_id))
 			sum ++;
 	}
 	return sum;
