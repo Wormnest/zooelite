@@ -5,6 +5,8 @@ class RouteChooser {
 	clusters = null;
 	max_routes = 0;
 	base_regions = null;
+	old_clusters = null;
+	last_route_index = 0;
 	
 	constructor(base_regions) {
 		this.base_regions = base_regions;
@@ -64,6 +66,7 @@ class RouteChooser {
 	
 	
 	function getNextRoute() {
+	
 		//holds the route we are currently planning on adding
 		local currentBest = 0;
 		local currentFlowImprovement = 0;
@@ -160,15 +163,19 @@ class RouteChooser {
 		LogManager.Log("added route from: " + this.possibleRoutes[currentBest][0] + " to " + this.possibleRoutes[currentBest][1] + "with flowImprovement: " + currentFlowImprovement, 4);
 		
 		//after adding edge update clusters...like a boss! ->this could definately be made more efficient
+		
 		local newClusterNum = this.clusters[possibleRoutes[currentBest][1]];
 		local oldClusterNum = this.clusters[possibleRoutes[currentBest][0]];
+		this.old_clusters = array(this.clusters.len(), 0);
 		for(local j = 0; j < this.clusters.len(); j += 1) {
+			this.old_clusters[j] = this.clusters[j];
 			if(this.clusters[j] == oldClusterNum) {
 				this.clusters[j] = newClusterNum;
 			}
 		}	
 	
 		local route = this.possibleRoutes[currentBest];
+		this.last_route_index = [currentBest];
 		LogManager.Log("route from: " + route[0] + " to " + route[1] + " with length: " + route[2], 4);
 		
 		local Xinc =  AIMap.GetTileX(this.base_regions[route[0]][0]) - AIMap.GetTileX(this.base_regions[route[1]][0]);
@@ -183,5 +190,13 @@ class RouteChooser {
 		}
 		
 		return route;
+	}
+
+	//this is basically if a station fucks up
+	function unGetRoute() { 
+		LogManager.Log("need to unget route", 4);
+		this.regionalRoutes.pop();
+		this.clusters = this.old_clusters;
+		this.possibleRoutes[this.last_route_index][4] = 0;
 	}
 }

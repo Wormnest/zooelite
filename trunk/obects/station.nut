@@ -41,28 +41,38 @@ class Station {
 			LogManager.Log("Bus stops ALREADY built", 4);
 			return true;
 		}
+		
+		local bus_stops_built = 3;
 		foreach(idx, build_tile in this.bus_stops) {
 			local front_tile = bus_front_tiles[idx];
 			LogManager.Log(idx + " " + build_tile + " " + front_tile, 4);
 			if(AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId) == false) {
-				if(AIError.GetLastErrorString() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+				if(AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
 					LogManager.Log("Town authority are being jerks, sending appeasement trees", 4);
 					ImproveRating(AITile.GetClosestTown(build_tile), build_tile, front_tile);
 					local success = AIRoad.BuildRoadStation(build_tile, front_tile, AIRoad.ROADVEHTYPE_BUS, this.stationId);
 					if(!success) {
 						LogManager.Log("Roll to save bus stop failed: " + AIError.GetLastErrorString(), 4);
-						return false;
+						bus_stops_built--;
+						//return false;
 					}
 				} else {
 					LogManager.Log("FAILED busstop", 4);
 					LogManager.Log(AIError.GetLastErrorString(), 4);
+					bus_stops_built--;
 				}
 				//this.bus_stops[idx] = null;
 			}
 			
 			AIRoad.BuildRoad(build_tile, front_tile);
 		}
-		this.bus_built = true;
+		if(bus_stops_built <= 0) {
+			return false;
+		}
+		else {
+			this.bus_built = true;
+			return true;
+		}
 	}
 	
 	function connectStopsToTown(townId) {

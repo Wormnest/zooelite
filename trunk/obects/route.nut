@@ -53,7 +53,7 @@ class Route {
 		
 		} else {
 			this.groupId = AIGroup.CreateGroup(AIVehicle.VT_RAIL);
-			add_vehicles = 2;
+			add_vehicles = 1;
 		}
 		
 		//Locate Depot to build in
@@ -136,6 +136,7 @@ class Route {
 		//TODO: Lookup this towns train station and pass it as first stop
 		//local first_stop = railstation_id1;
 		//local route = [railstation_id1, railstation_id2];
+		LogManager.Log("We have: " + station_list.len() + " stations in our LIST",4)
 		local first_stop = station_list.pop();
 		
 		LogManager.Log("Travelling Salesman, start: " + first_stop + " Addn'l Stops: " + station_list.len(), 4);
