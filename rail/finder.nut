@@ -477,7 +477,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 		local success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 
 		if(!success) {
-			if(AIError.GetLastErrorString() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+			if(AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
 				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
 				//ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
 				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
@@ -621,7 +621,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 		local success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NE_SW, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 
 		if(!success) {
-			if(AIError.GetLastErrorString() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+			if(AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
 				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
 				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
 				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
@@ -843,8 +843,18 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 		local success = AIRail.BuildRailStation(GetTileRelative(top_left_tile, 0, 2), AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 
 		if(!success) {
-			LogManager.Log(AIError.GetLastErrorString(), 4);
-			return false;
+			if(AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
+				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
+				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
+				if(!success) {
+					LogManager.Log("Roll to save failed: " + AIError.GetLastErrorString(), 4);
+					return false;
+				}
+			} else {
+				LogManager.Log(AIError.GetLastErrorString(), 4);
+				return false;
+			}
 		}
 		
 		stationId = AIStation.GetStationID(GetTileRelative(top_left_tile, 0, 2));
@@ -926,8 +936,20 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 		
 		local success = AIRail.BuildRailStation(GetTileRelative(bot_right, -1 * platforms, -RAIL_STATION_PLATFORM_LENGTH - 1), AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 		LogManager.Log(AIError.GetLastErrorString(), 4);
-		if(!success)
-			return false;
+		if(!success) {
+			if(AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
+				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
+				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
+				if(!success) {
+					LogManager.Log("Roll to save failed: " + AIError.GetLastErrorString(), 4);
+					return false;
+				}
+			} else {
+				LogManager.Log(AIError.GetLastErrorString(), 4);
+				return false;
+			}
+		}
 		stationId = AIStation.GetStationID(GetTileRelative(bot_right, -1 * platforms, -RAIL_STATION_PLATFORM_LENGTH - 1));
 		
 		local turn_tile = GetTileRelative(bot_right, -1 * platforms - 1, 0);
@@ -1000,8 +1022,20 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 		this_station.station_dir = [dtp.WE_LINE];
 		local bot_right = GetTileRelative(top_left_tile, width, height);
 		local success = AIRail.BuildRailStation(GetTileRelative(top_left_tile, 2, 1), AIRail.RAILTRACK_NE_SW, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
-		if(!success)
-			return false;
+		if(!success) {
+			if(AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
+				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
+				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
+				if(!success) {
+					LogManager.Log("Roll to save failed: " + AIError.GetLastErrorString(), 4);
+					return false;
+				}
+			} else {
+				LogManager.Log(AIError.GetLastErrorString(), 4);
+				return false;
+			}
+		}
 		stationId = AIStation.GetStationID(GetTileRelative(top_left_tile, 2, 1));
 		//Build rail around
 		AIRail.BuildRailTrack(top_left_tile, AIRail.RAILTRACK_SW_SE);
@@ -1074,8 +1108,20 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 		this_station.station_dir = [dtp.EW_LINE];
 		local bot_right = GetTileRelative(top_left_tile, width, height);
 		local success = AIRail.BuildRailStation(GetTileRelative(bot_right, -1 * RAIL_STATION_PLATFORM_LENGTH - 1, -1 * platforms), AIRail.RAILTRACK_NE_SW, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
-		if(!success)
-			return false;
+		if(!success) {
+			if(AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
+				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
+				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
+				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
+				if(!success) {
+					LogManager.Log("Roll to save failed: " + AIError.GetLastErrorString(), 4);
+					return false;
+				}
+			} else {
+				LogManager.Log(AIError.GetLastErrorString(), 4);
+				return false;
+			}
+		}
 		stationId = AIStation.GetStationID(GetTileRelative(bot_right, -1 * RAIL_STATION_PLATFORM_LENGTH - 1, -1 * platforms));
 		//Build rail around
 		AIRail.BuildRailTrack(bot_right, AIRail.RAILTRACK_NW_NE);
