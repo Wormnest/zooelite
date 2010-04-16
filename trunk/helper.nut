@@ -58,7 +58,7 @@ function GetNeighbours8(tile_id)
 function ImproveRating(town, corner1, corner2) {
 	local rating = AITown.GetRating(town, AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
 	local townLocation = AITown.GetLocation(town);
-
+	LogManager.Log("Trying to improve company rating with " + AITown.GetName(town), 4);
 	// If the rating is low, take steps to improve it
 	
 	//DISABLED BRIBES
@@ -104,12 +104,12 @@ function ImproveRating(town, corner1, corner2) {
 			local tile = tileList.Begin();
 			
 			//Eliminated maximum
-			while(AITown.GetRating(town, AICompany.ResolveCompanyID(AICompany.COMPANY_SELF)) < AITown.TOWN_RATING_GOOD
+			while(AITown.GetRating(town, AICompany.ResolveCompanyID(AICompany.COMPANY_SELF)) < AITown.TOWN_RATING_MEDIOCRE
 					  && tileList.HasNext()) {
 				local acc = AIAccounting();
-				for(local i = 0; i < 4; i++) {
+				//for(local i = 0; i < 4; i++) {
 					AITile.PlantTree(tile);
-				}
+				//}
 				//expenditure += acc.GetCosts();
 				tile = tileList.Next();
 			}

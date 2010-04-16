@@ -639,6 +639,7 @@ function DoubleRailroadBuilder::BuildTrack() {
 							LogManager.Log("Need to get cash in middle of route contruction", 4);
 							//enough_cash = false;
 							//problem = true;
+							local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
 							while(balance < 50000) {
 								AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
 								balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
