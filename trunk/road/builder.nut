@@ -133,7 +133,7 @@ function ZooElite::BuildDepotForTown(townId) {
 			local temptilelist = GetNeighbours4(tileId);
 			for(local frontTileIndex = temptilelist.Begin(); temptilelist.HasNext(); frontTileIndex = temptilelist.Next()) {
 				//Are we facing a road tile?
-				if(!success && AIRoad.IsRoadTile(frontTileIndex)) {
+				if(!success && AIRoad.IsRoadTile(frontTileIndex) &&  AITile.GetSlope(frontTileIndex) == AITile.SLOPE_FLAT && AITile.GetMinHeight(tileId) == AITile.GetMinHeight(frontTileIndex)) {
 					LogManager.Log("Attempting to face: " + frontTileIndex, 1);
 					success = AIRoad.BuildRoadDepot(tileId, frontTileIndex);
 					if(success && AIRoad.IsRoadDepotTile(tileId)) {
