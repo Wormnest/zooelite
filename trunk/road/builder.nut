@@ -173,7 +173,7 @@ function ZooElite::LinkTileToTile(tileId, tileId2) {
 	local pathfinder = CustomPathFinder();
 	/* Set the cost for making a turn high. */
 	pathfinder.cost.turn = 250;
-	pathfinder.cost.no_existing_road = 120;
+	pathfinder.cost.no_existing_road = 200;
 	
 	//TODO: Add some Intelligence to figure out if we can afford things based on available cash / master plan
 	pathfinder.cost.tunnel_per_tile = 200;
