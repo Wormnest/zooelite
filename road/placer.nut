@@ -4,6 +4,10 @@
 function ZooElite::FindPlacesInTownForMaxNMoreBusStations(townId, num) {
 	//Setup Vars
 	local searchRadius = 4;
+	
+	if(AITown.GetRating(townId, AICompany.ResolveCompanyID(AICompany.COMPANY_SELF)) < AITown.TOWN_RATING_MEDIOCRE)
+		ImproveRating(townId, 0, 0);
+	
 	//TODO: This should probably be passed down from a higher up function, which knows how many are already in the town
 	if(AITown.GetHouseCount(townId) > 9) {
 		searchRadius = Floor(BUS_RADIUS_MULTIPLIER*SquareRoot(AITown.GetHouseCount(townId)));

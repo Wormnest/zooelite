@@ -479,7 +479,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 		if(!success) {
 			if(AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
 				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
-				//ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
+				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
 				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 				if(!success) {
 					LogManager.Log("Roll to save failed: " + AIError.GetLastErrorString(), 4);
@@ -1233,7 +1233,7 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 	if(baseStation == false) {
 		LogManager.Log("Base Station Failed!", 4);
 		return false;
-		}
+	}
 	
 	//local firstIter = true;
 	foreach(town in towns) {
@@ -1284,7 +1284,11 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 			balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
 		}
 		
-		ZooElite.BuildMaxBusStationsInTown(town, 1);
+		local town_servicable = ZooElite.BuildMaxBusStationsInTown(town, 1);
+		if(!town_servicable) {
+			//TODO: We need to place this back on the stack to be developed later once it grows
+			return baseStation;	
+		}
 		ZooElite.BuildMaxBusStationsInTown(town, 3);
 		ZooElite.BuildDepotForTown(town);
 		
