@@ -336,11 +336,15 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			LogManager.Log(AITown.GetName(AITile.GetClosestTown(station1.station_tile)) + " has " + station1_route_count + " and " + AITown.GetName(AITile.GetClosestTown(station2.station_tile)) + " has " + station2_route_count, 4);
 			
 			local route = null;
+			
+			GetMoney(70000);
+			
 			if((station1_route_count == 0 && station2_route_count == 0) || junction_1 || junction_2) {
 				route = Route(stationId1, stationId2, depot);
 				station1.lines.push(route);
 				station2.lines.push(route);
 				route_table.push(route);
+				route.balanceRailService();
 			} else if(station1_route_count > 0 && station2_route_count == 0) {
 				route = station1.lines.pop();
 				route.servicedStations.push(stationId2);

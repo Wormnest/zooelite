@@ -623,7 +623,7 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 		if(!success) {
 			if(AIError.GetLastError() == AIError.ERR_LOCAL_AUTHORITY_REFUSES) {
 				LogManager.Log("Town authority are being jerks, sending appeasement trees", 3);
-				ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
+				//ImproveRating(AITile.GetClosestTown(top_left_tile), corner1, corner2);
 				success = AIRail.BuildRailStation(top_left_tile, AIRail.RAILTRACK_NW_SE, platforms, RAIL_STATION_PLATFORM_LENGTH, AIBaseStation.STATION_NEW);
 				if(!success) {
 					LogManager.Log("Roll to save failed: " + AIError.GetLastErrorString(), 4);
@@ -1236,25 +1236,18 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 	}
 	
 	//local firstIter = true;
-	foreach(town in towns) {
+	towns.Valuate(AITown.GetPopulation);
+	towns.Sort(AIAbstractList.SORT_BY_VALUE, false);
+	foreach(town, townIndex in towns) {
+		
+		if(AITown.GetPopulation(town) < 300) {
+			LogManager.Log("skipping town " + AITown.GetName(town) + "cause its to small", 4);
+			continue;
+		}
 		
 		LogManager.Log("attempting to connect to base station " + baseStation, 4);
-		//local road_tester = AITestMode();
-		//local loaned = 0;
-		local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
-		while(balance < 50000) {
-			LogManager.Log("Cash Low" + balance, 4);
-			if(AICompany.GetLoanAmount() + AICompany.GetLoanInterval() <= AICompany.GetMaxLoanAmount()) {
-				LogManager.Log("Can get loan", 4);
-				AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
-				//loaned++;
-			}
-			else {
-				ZooElite.Sleep(500);
-				LogManager.Log("Wait for cash to build bus roads", 4);
-			}
-			balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
-		}
+		
+		GetMoney(50000);
 		station_table[baseStation].connectStopsToTown(town);
 		//}
 		//road_tester = null;
@@ -1270,19 +1263,7 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 		ZooElite.BuildMaxBusStationsInTown(town, 1);
 		ZooElite.BuildMaxBusStationsInTown(town, 3);
 		ZooElite.BuildDepotForTown(town);*/
-		local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
-		while(balance < 50000) {
-			LogManager.Log("Cash Low", 4);
-			if(AICompany.GetLoanAmount() + AICompany.GetLoanInterval() <= AICompany.GetMaxLoanAmount()) {
-				AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
-				//loaned++;
-			}
-			else {
-				ZooElite.Sleep(500);
-				LogManager.Log("Wait for cash to build bus stations in town " + town, 4);
-			}
-			balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
-		}
+		GetMoney(50000);
 		
 		local town_servicable = ZooElite.BuildMaxBusStationsInTown(town, 1);
 		if(!town_servicable) {
@@ -1295,6 +1276,7 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 		
 
 		//possible cash management?
+		GetMoney(50000);
 		ZooElite.AdjustBusesInTown(town);
 		added_towns.append(town);
 	}

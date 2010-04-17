@@ -476,3 +476,18 @@ function TravelingSalesman2(start, list) {
 	
 	return route;
 }
+
+function GetMoney(amount) {
+	local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
+	while(balance < amount) {
+		//LogManager.Log("Cash Low", 4);
+		if(AICompany.GetLoanAmount() + AICompany.GetLoanInterval() <= AICompany.GetMaxLoanAmount()) {
+			AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
+		}
+		else {
+			ZooElite.Sleep(500);
+			LogManager.Log("Wait for cash", 4);
+			}
+		balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
+	}
+}
