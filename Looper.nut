@@ -73,79 +73,50 @@ function Looper::Loop() {
 					return 0;
 				}
 				else {
-				LogManager.Log("About to start actual route construction", 4);
-						if(base_regions[route[0]][3] == 0) {
-							base_regions[route[0]][2] = ZooElite.BuildBaseStation(base_regions[route[0]][1], base_regions[route[0]][0], 0);
-							base_regions[route[0]][3] = 1;
-						}
-						
-						if(base_regions[route[1]][3] == 0) {
-							base_regions[route[1]][2] = ZooElite.BuildBaseStation(base_regions[route[1]][1], base_regions[route[1]][0], 0);
-							base_regions[route[1]][3] = 1;
-						}
-						
-						local new_route = false;
-						
-						if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
-							local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
-							LogManager.Log("Before tracking, balance is: " + balance, 4);
-							while(balance < 50000) {
-								LogManager.Log("Cash Low", 4);
-								if(AICompany.GetLoanAmount() + AICompany.GetLoanInterval() <= AICompany.GetMaxLoanAmount()) {
-									AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
-									//loaned++;
-								}
-								else {
-									ZooElite.Sleep(500);
-									LogManager.Log("Wait for cash to build track", 4);
-								}
-								balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
-							}
-						
-							new_route = ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
-						}
-						else {   //one of the base stations failed so we aren't going to build the route
-							route_chooser.unGetRoute();
-							LogManager.Log("Backtracked due to bus failure", 4);
-							continue;
-						}
-						
-						if(base_regions[route[0]][4] == 0 && new_route) {
-							ZooElite.ConnectBaseRegion(base_regions[route[0]]);
-							base_regions[route[0]][4] = 1;
-						}
-						if(base_regions[route[1]][4] == 0 && new_route) {
-							ZooElite.ConnectBaseRegion(base_regions[route[1]]);
-							base_regions[route[1]][4] = 1;
-						}
-						
-						if(new_route) {
-							local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
-							while(balance < 70000) {
-								LogManager.Log("Cash Low for train", 4);
-								if(AICompany.GetLoanAmount() + AICompany.GetLoanInterval() <= AICompany.GetMaxLoanAmount()) {
-									AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
-									//loaned++;
-								}
-								else {
-									ZooElite.Sleep(500);
-									LogManager.Log("Wait for cash to build new train", 4);
-								}
-								balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
-							}
-							new_route.balanceRailService();
-						}
-						else {   //the actual route failed.
-							route_chooser.unGetRoute();
-							LogManager.Log("Backtracked due to route failure", 4);
-							continue;
-						}
-
-		
+					LogManager.Log("About to start actual route construction", 4);
+					if(base_regions[route[0]][3] == 0) {
+						base_regions[route[0]][2] = ZooElite.BuildBaseStation(base_regions[route[0]][1], base_regions[route[0]][0], 0);
+						base_regions[route[0]][3] = 1;
 					}
+					
+					if(base_regions[route[1]][3] == 0) {
+						base_regions[route[1]][2] = ZooElite.BuildBaseStation(base_regions[route[1]][1], base_regions[route[1]][0], 0);
+						base_regions[route[1]][3] = 1;
+					}
+						
+					local new_route = false;
+						
+					if(base_regions[route[0]][2] != false && base_regions[route[1]][2] != false) {
+						local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
+						LogManager.Log("Before tracking, balance is: " + balance, 4);
+						GetMoney(50000);
+						
+						new_route = ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
+					}
+					else {   //one of the base stations failed so we aren't going to build the route
+						route_chooser.unGetRoute();
+						LogManager.Log("Backtracked due to bus failure", 4);
+						continue;
+					}
+						
+					if(base_regions[route[0]][4] == 0 && new_route) {
+						ZooElite.ConnectBaseRegion(base_regions[route[0]]);
+						base_regions[route[0]][4] = 1;
+					}
+					if(base_regions[route[1]][4] == 0 && new_route) {
+						ZooElite.ConnectBaseRegion(base_regions[route[1]]);
+						base_regions[route[1]][4] = 1;
+					}
+					
+					if(!new_route) { //something failed
+						route_chooser.unGetRoute();
+						LogManager.Log("Backtracked due to route failure", 4);
+						continue;
+					}
+				}
 			}
-		//END new route building
 		}
+		//END new route building
 				
 	}
 }

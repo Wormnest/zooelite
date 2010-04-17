@@ -151,7 +151,7 @@ class RouteChooser {
 				currentBest = j;
 			}
 			
-			LogManager.Log(this.regionalRoutes.len() + " possible route flowImprovement: " + flowImprovement + ", minpath: "  + this.possibleRoutes[j][3] + ", distance: " + this.possibleRoutes[j][5] + " from " + this.possibleRoutes[j][0] + " to " +this.possibleRoutes[j][1], 4);
+			//LogManager.Log(this.regionalRoutes.len() + " possible route flowImprovement: " + flowImprovement + ", minpath: "  + this.possibleRoutes[j][3] + ", distance: " + this.possibleRoutes[j][5] + " from " + this.possibleRoutes[j][0] + " to " +this.possibleRoutes[j][1], 4);
 		}
 		//add best route
 		if(currentFlowImprovement < 0) {
