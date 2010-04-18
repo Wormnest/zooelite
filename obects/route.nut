@@ -16,8 +16,9 @@ class Route {
 	constructor(r_id1, r_id2, depot) {
 		//this.railstation_id1 = r_id1;
 		//this.railstation_id2 = r_id2;	
-		
+		this.seedVehicle = null;
 		this.depot_tile = depot;
+		this.groupId = null;
 		this.routeRailType = AIRail.GetCurrentRailType();
 		this.includedPaths = [];
 		this.servicedStations = [];
@@ -113,7 +114,7 @@ class Route {
 		for(local i = 0; i < add_vehicles; i++) {
 			local vehicle = AIVehicle.BuildVehicle(this.depot_tile, GetBestRailEngine(this.routeRailType));
 			//Put some wagons on it
-			for(local j = 0; j < 8; j++) {
+			for(local j = 0; j < 8 && AIVehicle.GetNumWagons(vehicle) < 9; j++) {
 				LogManager.Log("Add cart to child vehicle", 4);
 				local wagon = AIVehicle.BuildVehicle(this.depot_tile, GetBestRailWagon(GetPassengerCargoID(), this.routeRailType));
 				AIVehicle.MoveWagon(wagon, 0, vehicle, 0);
@@ -122,7 +123,6 @@ class Route {
 			AIVehicle.StartStopVehicle(vehicle);
 			if(i < add_vehicles - 1)
 				ZooElite.Sleep(300);
-			
 		}	
 		
 		this.lastUpdated = ZooElite.GetTick();
