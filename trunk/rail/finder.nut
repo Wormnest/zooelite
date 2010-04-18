@@ -131,7 +131,7 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 	//Ok so we may or may not actually be able to build on these...let's try to figure out how much it'd cost
 	//Sort results by cost
 	for(local tileId = tilelist.Begin(); tilelist.HasNext(); tileId = tilelist.Next()) {
-		local result = CostToLevelRectangle(tileId, square_y + 1, square_x + 1);
+		local result = RAIL_ACTUAL_COST_WEIGHT * CostToLevelRectangle(tileId, square_y + 1, square_x + 1);
 		if(result > -1) {
 			result += RAIL_STATION_SEARCH_DISTANCE_WEIGHT * AITile.GetBuildCost(AITile.BT_TERRAFORM) 
 							* AIMap.DistanceManhattan(GetTileRelative(tileId, Floor(square_y / 2), Floor(square_x / 2)), seed_tile);
