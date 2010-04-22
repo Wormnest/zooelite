@@ -239,6 +239,10 @@ function ZooElite::BuildRailStationForTown(townId, tileId, direction_of_tileId, 
 	} else {
 		while((verticletilelist.Count() > 0 || tilelist.Count() > 0) && result == false) {
 			//LogManager.Log("Found " + verticletilelist.Count() + " " + tilelist.Count() + " locations for " +  AITown.GetName(townId), 4);
+			if(AICompany.GetBankBalance(AICompany.COMPANY_SELF) < 25000) {
+				LogManager.Log("Money low, station building failing...", 4);
+				return false;
+			}
 			local top_left_tile = null;
 			local horizontal = true;
 			local swap = true;
