@@ -358,7 +358,8 @@ function DoubleRailroadBuilder::H(parent_node , tile , part_index , user_data , 
 	t_y = AIMap.GetTileY(tile);
 	g_x = AIMap.GetTileX(self.tile_to);
 	g_y = AIMap.GetTileY(self.tile_to);
-	return 100*max(abs(t_x - g_x) , abs(t_y - g_y)) * self.PART_COST;
+	//fudge factor
+	return 10*max(abs(t_x - g_x) , abs(t_y - g_y)) * self.PART_COST;
 }
 
 function DoubleRailroadBuilder::GetNeighbours(node , self){
@@ -662,7 +663,7 @@ function DoubleRailroadBuilder::BuildTrack() {
 					dtp.BuildDoublePart(path.tile , path.part_index)
 					//LogManager.Log("our test says part cost is " + accountant.GetCosts(), 4);
 					tester = null;
-					GetMoney(accountant.GetCosts());
+					GetMoney(accountant.GetCosts()+1000);
 					accountant = null;
 					
 					if(!dtp.LandToBuildDoublePart(path.tile , path.part_index) ||
