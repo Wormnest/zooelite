@@ -60,7 +60,7 @@ class Route {
 		//Locate Depot to build in
 		//local depotTile = 0;
 		
-		if(seedVehicle == null) {
+		if(this.seedVehicle == null) {
 			//We need to build our seeder, setup orders, then clone the rest
 			//Make sure we have the right vehicle for the rail type and all that
 			this.seedVehicle = AIVehicle.BuildVehicle(this.depot_tile, GetBestRailEngine(this.routeRailType));
