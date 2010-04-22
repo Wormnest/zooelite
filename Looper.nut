@@ -6,6 +6,7 @@ require("obects/station.nut");
 require("RouteChooser.nut");
 
 class Looper {
+	static LOANS_ON = true;
 };
 
 function Looper::Loop() {
@@ -13,6 +14,8 @@ function Looper::Loop() {
 	local BUS_UPDATE = 2;
 	local BUILD_ROUTE = 1;
 	local MANAGE_FUNDS = 1;
+	local CLEAR_LOAN = 5;
+	
 	
 	//first divide map into small regions
 	local towns = AITownList();
@@ -23,12 +26,21 @@ function Looper::Loop() {
 	local i = 0;
 	//we have a counter to decide how often to do tasks
 	local counter = 0;
+	//this counts number of routes actually contructed
+	local built = 0;
 	local stored_route = null;
 	while(true) {
 		LogManager.Log("Main Loop",4);
 		
 		counter++;
+		built++;
 		
+		if(built % CLEAR_LOAN == 0) {
+			/*while(AICompany.GetLoanAmount() > 0) {
+				AICompany.SetLoanAmount(AICompany.GetLoanAmount() - AICompany.GetLoanInterval());
+			}*/
+			LOANS_ON = false;
+		}
 		if(counter % MANAGE_FUNDS == 0) {
 			local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
 			while(balance > 80000) {
@@ -36,7 +48,12 @@ function Looper::Loop() {
 				balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
 			}
 			while(balance < 50000) {
-				AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
+				if(LOANS_ON) {
+					AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
+				}
+				else {
+					ZooElite.Sleep(500);
+				}
 				balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
 			}
 		}
@@ -96,6 +113,7 @@ function Looper::Loop() {
 					else {   //one of the base stations failed so we aren't going to build the route
 						route_chooser.unGetRoute();
 						LogManager.Log("Backtracked due to bus failure", 4);
+						built--;
 						continue;
 					}
 						
@@ -111,7 +129,9 @@ function Looper::Loop() {
 					if(!new_route) { //something failed
 						route_chooser.unGetRoute();
 						LogManager.Log("Backtracked due to route failure", 4);
+						built--;
 						continue;
+					
 					}
 				}
 			}

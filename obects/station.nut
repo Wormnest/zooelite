@@ -76,8 +76,18 @@ class Station {
 	}
 	
 	function connectStopsToTown(townId) {
+		local connections = 3;
 		foreach(idx, front_tile in this.bus_stops) {
 			local success = ZooElite.LinkTileToTile(front_tile,AITown.GetLocation(townId));
+			if(!success) {
+				connections--;
+			}
+		}
+		if(connections > 0) {
+			return true;
+		}
+		else {
+			return false;
 		}
 	}
 	
