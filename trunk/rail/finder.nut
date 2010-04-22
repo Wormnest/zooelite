@@ -1240,7 +1240,7 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 	towns.Sort(AIAbstractList.SORT_BY_VALUE, false);
 	foreach(town, townIndex in towns) {
 		
-		if(AITown.GetPopulation(town) < 300) {
+		if(AITown.GetPopulation(town) < 150) {
 			LogManager.Log("skipping town " + AITown.GetName(town) + "cause its to small", 4);
 			continue;
 		}
@@ -1248,7 +1248,10 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 		LogManager.Log("attempting to connect to base station " + baseStation, 4);
 		
 		GetMoney(50000);
-		station_table[baseStation].connectStopsToTown(town);
+		local success = station_table[baseStation].connectStopsToTown(town);
+		if(!success) {
+			continue;
+		}
 		//}
 		//road_tester = null;
 		//AICompany.SetLoanAmount(AICompany.GetLoanAmount() + 50000*loaned);

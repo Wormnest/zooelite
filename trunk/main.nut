@@ -41,6 +41,7 @@ class ZooElite extends AIController {
 	dtp = null;
 	route_table = [];
 	added_towns = [];
+	LOANS_ON = true;
 	
 	constructor(){
 		ai_instance = this;

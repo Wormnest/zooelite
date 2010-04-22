@@ -74,11 +74,12 @@ class DoubleRailroadBuilder {
 	/* Private: */
 	/* Constants: */
 	static PART_COST = 100;
-	static DIRECTION_CHANGE_COST = 100;
+	static DIRECTION_CHANGE_COST = 70;
 	static TERRAFORM_COST = 25;
 	static FARM_COST = 0;
 	static BRIDGE_TILE_COST = 100;
 	static BRIDGE_MAX_LENGTH = 100;//15;
+	static FUDGE = 5;
 
 	static PATHFINDING_TIME_OUT = 100; //(365 * 2.5).tointeger();/* days. */
 	static PATHFINDING_ITERATIONS = 100000;
@@ -359,7 +360,7 @@ function DoubleRailroadBuilder::H(parent_node , tile , part_index , user_data , 
 	g_x = AIMap.GetTileX(self.tile_to);
 	g_y = AIMap.GetTileY(self.tile_to);
 	//fudge factor
-	return 10*max(abs(t_x - g_x) , abs(t_y - g_y)) * self.PART_COST;
+	return 1*max(abs(t_x - g_x) , abs(t_y - g_y)) * self.PART_COST;
 }
 
 function DoubleRailroadBuilder::GetNeighbours(node , self){

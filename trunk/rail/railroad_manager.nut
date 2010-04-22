@@ -762,8 +762,8 @@ function RailroadManager::BuildNewTrain(railroad_route , source){
 	/* If it is the first train. */
 	if(source.num_wagons == null){
 
-		locomotive = AIVehicle.BuildVehicle(source.double_railroad.first_depot_tile ,
-			railroad_route.locomotive_id);
+	//	locomotive = AIVehicle.BuildVehicle(source.double_railroad.first_depot_tile ,
+		//	railroad_route.locomotive_id);
 		if(!AIVehicle.IsValidVehicle(locomotive)){
 			if(AIError.GetLastErrorString() == AIError.ERR_NOT_ENOUGH_CASH){
 				::ai_instance.money_manager.ReleaseReservation(reservation_id);
@@ -773,7 +773,7 @@ function RailroadManager::BuildNewTrain(railroad_route , source){
 		}
 		AIVehicle.RefitVehicle(locomotive , source.cargo);
 
-		wagon = AIVehicle.BuildVehicle(source.double_railroad.first_depot_tile , source.wagon_id);
+		//wagon = AIVehicle.BuildVehicle(source.double_railroad.first_depot_tile , source.wagon_id);
 		if(!AIVehicle.IsValidVehicle(wagon)){
 			if(AIError.GetLastErrorString() == AIError.ERR_NOT_ENOUGH_CASH){
 				AIVehicle.SellVehicle(locomotive);
@@ -800,15 +800,15 @@ function RailroadManager::BuildNewTrain(railroad_route , source){
 
 	}else{
 
-		locomotive = AIVehicle.BuildVehicle(source.double_railroad.first_depot_tile ,
-			railroad_route.locomotive_id);
+	//	locomotive = AIVehicle.BuildVehicle(source.double_railroad.first_depot_tile ,
+			//railroad_route.locomotive_id);
 		if(!AIVehicle.IsValidVehicle(locomotive)){
 			::ai_instance.money_manager.ReleaseReservation(reservation_id);
 			return false;
 		}
 		AIVehicle.RefitVehicle(locomotive , source.cargo);
 		for(local i = 0 ; i < source.num_wagons ; i++){
-			wagon = AIVehicle.BuildVehicle(source.double_railroad.first_depot_tile , source.wagon_id);
+		//	wagon = AIVehicle.BuildVehicle(source.double_railroad.first_depot_tile , source.wagon_id);
 			if(!AIVehicle.IsValidVehicle(wagon)){
 				AIVehicle.SellVehicle(locomotive);
 				::ai_instance.money_manager.ReleaseReservation(reservation_id);
