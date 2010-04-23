@@ -42,7 +42,8 @@ function ZooElite::AdjustBusesInTown(townId) {
 			
 		local saturation_point = distance / 5 * SATURATION_CONSTANT + num_stations * 2;
 		local multiplier = (distance * 1.0 + num_stations * 8.0) / 20.0;
-		multiplier = max(multipiler, 1.0);
+		if(multiplier < 1.0)
+			multiplier = 1.0;
 		shortfall =  shortfall * multiplier;
 		LogManager.Log("Analysis - Shortfall: " + shortfall + " Multiplier: " + multiplier + " Capacity: " + capacity + " Loads: " + Ceiling(loads_per_month) + " Saturation Point: " + saturation_point, 4);
 		local more_bus = Ceiling(shortfall / capacity);

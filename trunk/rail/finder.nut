@@ -465,8 +465,8 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 	
 	
 	//TODO: Set railtype that we're using, how does this change?
-	local types = AIRailTypeList();
-	AIRail.SetCurrentRailType(types.Begin());
+	//local types = AIRailTypeList();
+	//AIRail.SetCurrentRailType(types.Begin());
 	local stationId = 0;
 	if(horz) {
 		LogManager.Log("Building regional, horizontal configuration", 4);
@@ -825,8 +825,8 @@ function ZooElite::BuildTrainStation(townId, top_left_tile, platforms, is_termin
 	AITile.LevelTiles(top_left_tile, GetTileRelative(top_left_tile, width + 1, height + 1));
 	
 	//TODO: Set railtype that we're using, how does this change?
-	local types = AIRailTypeList();
-	AIRail.SetCurrentRailType(types.Begin());
+	//local types = AIRailTypeList();
+	//AIRail.SetCurrentRailType(types.Begin());
 
 	
 	//TODO: We only handle terminuses at this point

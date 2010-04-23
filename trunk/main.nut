@@ -42,10 +42,14 @@ class ZooElite extends AIController {
 	route_table = [];
 	added_towns = [];
 	LOANS_ON = true;
+	rail_type = null;
 	
 	constructor(){
 		ai_instance = this;
 		dtp = DoubleTrackParts();
+		local types = AIRailTypeList();
+		this.rail_type = types.Begin();
+		AIRail.SetCurrentRailType(this.rail_type);
 	}
 }
 
