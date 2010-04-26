@@ -212,10 +212,39 @@ function RoutePlanner::getBaseRegions(towns) {
 					aggRegion2 = c;
 				}	
 			}	
-		}	
+		}
+
 	}
 	
-	RoutePlanner.addBaseRegions([regionCenters, bucketList]);
+	local rebalanced_centers = array(bucketList.len(), null);
+	for(local i = 0; i < bucketList.len(); i++) {
+		local xSum = 0;
+		local ySum = 0;
+		local popSum = 0;
+		local numTowns = 0;
+		foreach(town in bucketList[i]) {
+			xSum += AIMap.GetTileX(AITown.GetLocation(town))*AITown.GetPopulation(town);
+			ySum += AIMap.GetTileY(AITown.GetLocation(town))*AITown.GetPopulation(town);
+			popSum += AITown.GetPopulation(town);
+			numTowns++;
+			//LogManager.Log("town pop: " + AITown.GetPopulation(town), 4);
+		}
+		
+		local xAvg = xSum/(popSum);
+		local yAvg = ySum/(popSum);
+		
+		rebalanced_centers[i] = AIMap.GetTileIndex(xAvg, yAvg);
+		if(!AIMap.IsValidTile(rebalanced_centers[i])) {
+			LogManager.Log("the tile is fucked", 4);
+		}
+		/*else {
+			LogManager.Log("rebalanced center " + i + " at tile " +  rebalanced_centers[i], 4);
+		}*/
+	}
+		
+		
+	
+	RoutePlanner.addBaseRegions([rebalanced_centers, bucketList]);
 	return 0;
 }
 
@@ -977,7 +1006,7 @@ function RoutePlanner::findMinPath(region1, region2, regionalRoutes, clusters) {
 function RoutePlanner::addBaseRegions(regions) {
 
 	for(local i = 0; i < regions[0].len(); i += 1) {
-		LogManager.Log("BASE REGION", 4);
+		//LogManager.Log("BASE REGION", 4);
 		Sign(regions[0][i], "BASE REGION");
 		//ZooElite.BuildBaseStation(regions[1][i], regions[0][i], 1, 0, 0);
 	

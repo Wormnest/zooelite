@@ -39,7 +39,7 @@ function Looper::Loop() {
 			/*while(AICompany.GetLoanAmount() > 0) {
 				AICompany.SetLoanAmount(AICompany.GetLoanAmount() - AICompany.GetLoanInterval());
 			}*/
-			LOANS_ON = false;
+			//LOANS_ON = false;
 		}
 		if(counter % MANAGE_FUNDS == 0) {
 			local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
@@ -68,6 +68,7 @@ function Looper::Loop() {
 			local route;
 			
 			if(stored_route == null) {
+				LogManager.Log("Going to get route", 4);
 				route = route_chooser.getNextRoute();
 			}
 			else {
