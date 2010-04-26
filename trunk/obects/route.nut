@@ -112,8 +112,8 @@ class Route {
 		//Clone/get best engine and send them in
 		//TODO: Should we be building vehicles that might be newer than our seed vehicle? This could require more computation later when deciding when to upgrade
 		for(local i = 0; i < add_vehicles && i < 2; i++) {
-			while(AIEngine.GetPrice(GetBestRailEngine(this.routeRailType) * 2 > AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF)))) {
-				ZooElite.Sleep(500);
+			while(AIEngine.GetPrice(GetBestRailEngine(this.routeRailType)) * 2 > AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF))) {
+				GetMoney(AIEngine.GetPrice(GetBestRailEngine(this.routeRailType)) * 2);
 				LogManager.Log("Waiting for money to buy engine...", 3);
 			}
 			local vehicle = AIVehicle.BuildVehicle(this.depot_tile, GetBestRailEngine(this.routeRailType));

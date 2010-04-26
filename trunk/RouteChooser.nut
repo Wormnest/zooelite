@@ -7,6 +7,7 @@ class RouteChooser {
 	base_regions = null;
 	old_clusters = null;
 	last_route_index = 0;
+	DISTANCE_MIN = 150;
 	
 	constructor(base_regions) {
 		this.base_regions = base_regions;
@@ -30,6 +31,9 @@ class RouteChooser {
 				local region2 = j;
 				local totalPop = this.regional_pops[i] + this.regional_pops[j];
 				local distance = SquareRoot(AIMap.DistanceSquare(base_regions[i][0], base_regions[j][0]));
+				/*if(distance < DISTANCE_FUDGE) {
+					distance = distance*5;
+				}*/
 			
 				//now decide whether to add route:
 				if(distance > 0 && distance < 200) {
@@ -76,6 +80,11 @@ class RouteChooser {
 		
 			//don't check if already added
 			if(this.possibleRoutes[j][2] == 1) {
+				continue;
+			}
+			//if it is two short at beginning
+			if(regionalRoutes.len() < 4 && possibleRoutes[j][5] < 160) {
+				LogManager.Log("Dont consider route: " + j, 4);
 				continue;
 			}
 			

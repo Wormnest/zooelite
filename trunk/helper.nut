@@ -480,6 +480,11 @@ function TravelingSalesman2(start, list) {
 function GetMoney(amount) {
 	local balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
 	while(balance < amount) {
+		ZooElite.CLEAR_JAMS++;
+		if(ZooElite.CLEAR_JAMS % 20 == 0) {
+			//vehicles = AIVehicleList();
+			//vehicles.Valuate(
+		}
 		//LogManager.Log("Cash Low", 4);
 		if(AICompany.GetLoanAmount() + AICompany.GetLoanInterval() <= AICompany.GetMaxLoanAmount() && ZooElite.LOANS_ON) {
 			AICompany.SetLoanAmount(AICompany.GetLoanAmount() + AICompany.GetLoanInterval());
