@@ -7,7 +7,7 @@ class RouteChooser {
 	base_regions = null;
 	old_clusters = null;
 	last_route_index = 0;
-	DISTANCE_MIN = 150;
+	DISTANCE_MIN = 100;
 	
 	constructor(base_regions) {
 		this.base_regions = base_regions;
@@ -83,8 +83,8 @@ class RouteChooser {
 				continue;
 			}
 			//if it is two short at beginning
-			if(regionalRoutes.len() < 4 && possibleRoutes[j][5] < 160) {
-				LogManager.Log("Dont consider route: " + j, 4);
+			if(regionalRoutes.len() < 2 && possibleRoutes[j][5] < DISTANCE_MIN) {
+				//LogManager.Log("Dont consider route: " + j, 4);
 				continue;
 			}
 			

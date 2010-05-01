@@ -11,8 +11,14 @@ class Looper {
 
 function Looper::Loop() {
 
-	local BUS_UPDATE = 2;
-	local BUILD_ROUTE = 1;
+	LogManager.Log(AIMap.IsValidTile(AIMap.GetTileIndex(1,1)), 4);
+	LogManager.Log(AIMap.IsValidTile(AIMap.GetTileIndex(AIMap.GetMapSizeX()-2, AIMap.GetMapSizeY()-2)), 4);
+	
+	Sign(AIMap.GetTileIndex(1,1), "TOP");
+	Sign(AIMap.GetTileIndex(AIMap.GetMapSizeX()-2, AIMap.GetMapSizeY()-2), "BOTTOM");
+
+	local VEHICLE_UPDATE = 2;
+	local BUILD_ROUTE = 2;
 	local MANAGE_FUNDS = 1;
 	local CLEAR_LOAN = 5;
 	
@@ -29,8 +35,10 @@ function Looper::Loop() {
 	//this counts number of routes actually contructed
 	local built = 0;
 	local stored_route = null;
+	
 	while(true) {
 		LogManager.Log("Main Loop",4);
+		//ClearSigns();
 		
 		counter++;
 		built++;
@@ -58,9 +66,12 @@ function Looper::Loop() {
 			}
 		}
 				
-		if(counter % BUS_UPDATE == 0) {
+		if(counter % VEHICLE_UPDATE == 0) {
 			foreach(town in added_towns) {
-				//ZooElite.AdjustBusesInTown(town);
+				ZooElite.AdjustBusesInTown(town);
+			}
+			foreach(route in route_table) {
+				route.balanceRailService();
 			}
 		}
 		
@@ -109,7 +120,12 @@ function Looper::Loop() {
 						LogManager.Log("Before tracking, balance is: " + balance, 4);
 						GetMoney(50000);
 						
-						new_route = ZooElite.ConnectStations(base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
+						if(built < 3) {
+							new_route = ZooElite.ConnectStations(1, 350, base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
+						}
+						else {
+							new_route = ZooElite.ConnectStations(1, 100, base_regions[route[0]][2], base_regions[route[1]][2], 0, 0);
+						}
 					}
 					else {   //one of the base stations failed so we aren't going to build the route
 						route_chooser.unGetRoute();

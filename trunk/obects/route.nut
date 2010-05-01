@@ -12,8 +12,9 @@ class Route {
 	routeDistance = null;
 	includedPaths = null;
 	servicedStations = null;
+	paths = null;
 
-	constructor(r_id1, r_id2, depot) {
+	constructor(r_id1, r_id2, depot, path1, path2) {
 		//this.railstation_id1 = r_id1;
 		//this.railstation_id2 = r_id2;	
 		this.seedVehicle = null;
@@ -24,6 +25,8 @@ class Route {
 		this.servicedStations = [];
 		this.servicedStations.push(r_id1);
 		this.servicedStations.push(r_id2);
+		this.paths = [];
+		this.paths.push([path1, path2]);
 		routeDistance = 0;
 	}
 	
@@ -33,6 +36,10 @@ class Route {
 		
 		if(this.groupId != null) {
 			local vehicles = AIVehicleList_Group(this.groupId);
+			if(vehicles.Count() > 3) {
+				LogManager.Log("Rail route saturated", 4);
+				return true;
+			}
 			local profit = AIVehicle.GetProfitLastYear(this.seedVehicle);
 			local waiting = 0;
 			foreach(station in servicedStations) {
