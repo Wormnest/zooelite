@@ -46,12 +46,14 @@ class DoubleRailroad {
 
 class DoubleRailroadBuilder {
 	/* Public: */
-	constructor(tile_from , tile_to , part_from , part_to){
+	constructor(fudge, time_out, tile_from , tile_to , part_from , part_to){
 
+		this.time_out = time_out;
 		this.tile_from = tile_from;
 		this.tile_to = tile_to;
 		this.part_from = part_from;
 		this.part_to = part_to;
+		this.fudge = fudge;
 
 		this.dtp = ::ai_instance.dtp;
 
@@ -84,6 +86,8 @@ class DoubleRailroadBuilder {
 	static PATHFINDING_TIME_OUT = 350; //(365 * 2.5).tointeger();/* days. */
 	static PATHFINDING_ITERATIONS = 100000;
 
+	fudge = null;
+	time_out = null
 	tile_from = null;
 	tile_to = null;
 	part_from = null;
@@ -288,6 +292,29 @@ function DoubleRailroadBuilder::ConvertTrack(path , rail_type){
 	}
 }
 
+function DoubleRailroadBuilder::RepairTrack(route) {
+	local dtp = ::ai_instance.dtp;
+	local path = route[route[0]+1];
+	if(path!= null) {
+		LogManager.Log("Entering Repair Loop", 4);
+	}
+	while(path!= null) {
+		//LogManager.Log("In Repair Loop", 4);
+		switch(path.part_index){
+			case dtp.BRIDGE:
+			break;
+			case dtp.TUNNEL:
+			break;
+			default:
+				dtp.BuildDoublePart(path.tile , path.part_index);
+			break;
+		}
+		path = path.child_path;
+	}
+	
+	//DoubleRailroadBuilder.BuildSignals(path , 3);
+}
+
 /* TODO: */
 function DoubleRailroadBuilder::GetTrackCost(){
 }
@@ -360,7 +387,7 @@ function DoubleRailroadBuilder::H(parent_node , tile , part_index , user_data , 
 	g_x = AIMap.GetTileX(self.tile_to);
 	g_y = AIMap.GetTileY(self.tile_to);
 	//fudge factor
-	return 1*max(abs(t_x - g_x) , abs(t_y - g_y)) * self.PART_COST;
+	return self.fudge*max(abs(t_x - g_x) , abs(t_y - g_y)) * self.PART_COST;
 }
 
 function DoubleRailroadBuilder::GetNeighbours(node , self){
@@ -618,7 +645,7 @@ function DoubleRailroadBuilder::BuildTrack() {
 		}
 		local path = aystar.FindPath(PATHFINDING_ITERATIONS);
 
-		if(AIDate.GetCurrentDate() > start_date + PATHFINDING_TIME_OUT){
+		if(AIDate.GetCurrentDate() > start_date + this.time_out){
 			LogManager.Log("DoubleRailroadBuilder::BuildTrack: Time out.", 4);
 			if(final_path != null) DemolishDoubleRailroad(final_path);
 			if(first_path != null) DemolishDoubleRailroad(first_path);
@@ -751,7 +778,9 @@ function DoubleRailroadBuilder::BuildTrack() {
 		double_railroad.first_depot_tile = DoubleDepotBuilder.BuildDepots(double_railroad.path, 100000, false);
 		}
 	/* Build the signals. */
+	GetMoney(20000);
 	BuildSignals(final_path , 3);
+	//BuildSignals(final_path, 5);
 
 	return double_railroad;
 }

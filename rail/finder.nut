@@ -465,8 +465,15 @@ function ZooElite::BuildRegionalStation(top_left_tile, platforms, horz, shift, l
 	
 	
 	//TODO: Set railtype that we're using, how does this change?
-	//local types = AIRailTypeList();
-	//AIRail.SetCurrentRailType(types.Begin());
+	local types = AIRailTypeList();
+	local rail_type = types.Begin();
+	if(rail_type != AIRail.GetCurrentRailType()) {
+		LogManager.Log("Get money to Convert Rail Type", 4);
+		GetMoney(60000);
+		LogManager.Log("Converting Rail Type", 4);
+		AIRail.ConvertRailType(AIMap.GetTileIndex(1,1), AIMap.GetTileIndex(AIMap.GetMapSizeX() - 2, AIMap.GetMapSizeY() - 2), rail_type);
+		AIRail.SetCurrentRailType(rail_type);
+	}
 	local stationId = 0;
 	if(horz) {
 		LogManager.Log("Building regional, horizontal configuration", 4);
@@ -1216,7 +1223,7 @@ function ZooElite::BuildBaseStation(towns, top_left_tile, is_terminus) {
 			}
 		balance = AICompany.GetBankBalance(AICompany.ResolveCompanyID(AICompany.COMPANY_SELF));
 	}
-	local baseStation = ZooElite.BuildRailStationForTown(towns.Begin(), top_left_tile, center_tile, 2, is_terminus);
+	local baseStation = ZooElite.BuildRailStationForTown(towns.Begin(), top_left_tile, center_tile, 4, is_terminus);
 	//////////////////////////
 		
 	if(baseStation != false) {
@@ -1259,7 +1266,7 @@ function ZooElite::ConnectBaseRegion(baseRegion) {
 		//}
 		//road_tester = null;
 		//AICompany.SetLoanAmount(AICompany.GetLoanAmount() + 50000*loaned);
-		//station_table[baseStation].connectStopsToTown(town);
+		station_table[baseStation].connectStopsToTown(town);
 		
 		town_table[town].rail_station_id = baseStation;
 		station_table[baseStation].serviced_cities.push(town);

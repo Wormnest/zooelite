@@ -326,13 +326,13 @@ function DoubleJunctionBuilder::BuildJunctionPart(junction_information){
 		part_index = path.parent_path.part_index;
 		//if(!
 		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
-		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
+		//dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL); 
 
 		tile = path.child_path.tile;
 		part_index = path.child_path.part_index;
 		//if(!
 		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
-		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
+		//dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
 
 	/* Lines and Diagonals.*/
 	}else{
@@ -350,15 +350,14 @@ function DoubleJunctionBuilder::BuildJunctionPart(junction_information){
 		part_index = path.parent_path.parent_path.part_index;
 		//if(!
 		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
-		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
+		//dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
 
 		tile = path.child_path.tile;
 		part_index = path.child_path.part_index;
 		//if(!
 		dtp.RemoveDoublePartSignals(tile , part_index); //return false;
-		//if(!dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
+		//dtp.BuildDoublePartSignals(tile , part_index , AIRail.SIGNALTYPE_NORMAL);
 	}
-
 	tile = path.tile;
 	part_index = path.part_index;
 	foreach(j in dtp.parts[part_index].junctions){
@@ -372,8 +371,7 @@ function DoubleJunctionBuilder::BuildJunctionPart(junction_information){
 	dtp.LevelPart(junction_information.tile , junction.part_index , height);
 
 	if(!dtp.BuildDoublePart(junction_information.tile , junction.part_index)) return false;
-	//if(!dtp.BuildDoublePartSignals(junction_information.tile ,
-		//junction.part_index , AIRail.SIGNALTYPE_NORMAL)) return false;
+	//dtp.BuildDoublePartSignals(junction_information.tile , junction.part_index , AIRail.SIGNALTYPE_NORMAL);
 
 	/* Now, insert the junction_information in the path nodes that were affected. */
 	/* Bends.*/

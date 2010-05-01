@@ -2,7 +2,7 @@
 //require("util/direction.nut");
 
 //f1 and f2 tell us whether we are using the backup plans. They start at 0, 0 when inpute by user
-function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
+function ZooElite::ConnectStations(fudge, time_out, stationId1, stationId2, f1, f2) {
 	LogManager.Log("Connecting Stations: " + stationId1 + " and " + stationId2, 4);
 	
 	//for junctions
@@ -136,13 +136,14 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 		if(station2.routes[dirIndex2[f2]] != null) {
 			junction_2 = 1;
 			LogManager.Log("Need to buildJunction for station: " + station2.stationId, 4);
-			local djb = DoubleJunctionBuilder([station2.routes[dirIndex2[f2]]],
+			local djb = DoubleJunctionBuilder([station2.routes[dirIndex2[f2]][1]],
 										AIBaseStation.GetLocation(station1.stationId) , JUNCTION_GAP_SIZE , MAXIMUM_DISTANCE_JUNCTION_POINT);
-			LogManager.Log("Path Tile: " + AIMap.GetTileY(station2.routes[dirIndex2[f2]].tile), 4);
+			LogManager.Log("Path Tile: " + AIMap.GetTileY(station2.routes[dirIndex2[f2]][1].tile), 4);
 			LogManager.Log("Station Tile: " + AIMap.GetTileY(AIBaseStation.GetLocation(station2.stationId)), 4);
 			LogManager.Log("Prefered Direction: " + Direction.GetDirectionsToTile(AIBaseStation.GetLocation(station2.stationId), AIBaseStation.GetLocation(station1.stationId)).first, 4);
 			local junction_information2 = djb.BuildJunction(Direction.GetDirectionsToTile(AIBaseStation.GetLocation(station1.stationId),
 																					AIBaseStation.GetLocation(station2.stationId)).first);//aqui esta o erro (Nao so aqui)
+			DoubleRailroadBuilder.RepairTrack(station2.routes[dirIndex2[f2]]);
 			if(junction_information2 == null) {
 				LogManager.Log("Junction construction failed", 4);
 				junction_failed = 1;
@@ -262,10 +263,11 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 		if(station1.routes[dirIndex1[f1]] != null) {
 			junction_1 = 1;
 			LogManager.Log("Need to buildJunction for station: " + station1.stationId, 4);
-			local djb = DoubleJunctionBuilder([station1.routes[dirIndex1[f1]]],
+			local djb = DoubleJunctionBuilder([station1.routes[dirIndex1[f1]][1]],
 										AIBaseStation.GetLocation(station2.stationId) , JUNCTION_GAP_SIZE , MAXIMUM_DISTANCE_JUNCTION_POINT);
 			local junction_information1 = djb.BuildJunction(Direction.GetDirectionsToTile(AIBaseStation.GetLocation(station2.stationId),
 																					AIBaseStation.GetLocation(station1.stationId)).first);//aqui esta o erro (Nao so aqui)
+			DoubleRailroadBuilder.RepairTrack(station1.routes[dirIndex1[f1]]);
 			if(junction_information1 == null) {
 				LogManager.Log("Junction1 construction failed", 4);
 				junction_failed = 1;
@@ -273,6 +275,7 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			else { 
 				station1_tile = dtp.parts[junction_information1.junction_part_index].previous_part_offset + junction_information1.tile;
 				station1_part = dtp.GetOppositePart(dtp.parts[junction_information1.junction_part_index].previous_part);
+				
 			}
 		}
 		
@@ -290,7 +293,7 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			Sign(station2_tile, "station2_tile");
 			Sign(station1_tile, "station1_tile");
 			
-			drrb = DoubleRailroadBuilder(station2_tile, station1_tile, station2_part, 
+			drrb = DoubleRailroadBuilder(fudge, time_out, station2_tile, station1_tile, station2_part, 
 												dtp.GetOppositePart(station1_part));
 				
 			double_railroad = drrb.BuildTrack();
@@ -301,10 +304,16 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 		
 		if(double_railroad != null && double_railroad != false) {
 			if(!junction_1) {
-				station1.routes[dirIndex1[f1]] = double_railroad.path;
+				station1.routes[dirIndex1[f1]] = [0, double_railroad.path, double_railroad.path.reversePath()];
+			}
+			else {
+				DoubleRailroadBuilder.RepairTrack(station1.routes[dirIndex1[f1]]);
 			}
 			if(!junction_2) {
-				station2.routes[dirIndex2[f2]] = double_railroad.path.reversePath();
+				station2.routes[dirIndex2[f2]] = [1, double_railroad.path.reversePath(), double_railroad.path];
+			}
+			else {
+				DoubleRailroadBuilder.RepairTrack(station2.routes[dirIndex2[f2]]);
 			}
 			
 			/*//local drrdb = DoubeDepotBuilder();
@@ -340,7 +349,7 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			GetMoney(70000);
 			
 			if((station1_route_count == 0 && station2_route_count == 0) || junction_1 || junction_2) {
-				route = Route(stationId1, stationId2, depot);
+				route = Route(stationId1, stationId2, depot, station1.routes[dirIndex1[f1]][1], station1.routes[dirIndex1[f2]][1]);
 				station1.lines.push(route);
 				station2.lines.push(route);
 				route_table.push(route);
@@ -348,6 +357,7 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 			} else if(station1_route_count > 0 && station2_route_count == 0) {
 				route = station1.lines.pop();
 				route.servicedStations.push(stationId2);
+				route.paths.push([station1.routes[dirIndex1[f1]][1], station1.routes[dirIndex1[f2]][1]]);
 				route.balanceRailService();
 				route.updateOrders();
 				station1.lines.push(route);
@@ -376,26 +386,38 @@ function ZooElite::ConnectStations(stationId1, stationId2, f1, f2) {
 		}
 		
 		else {
-			LogManager.Log("need to try alternative path", 4);
 			local new_route;
-			if(f1 == 0 && f2 == 0) {
-				new_route = ConnectStations(stationId1, stationId2, 1, 0);
 		
-			}
-			if(f1 == 1 && f2 == 0) {
-				new_route = ConnectStations(stationId1, stationId2, 0, 1);
-			}
-			if(f1 == 0  && f2 == 1) {
-				new_route = ConnectStations(stationId1, stationId2, 1, 1);
-			}
-			if(f1 == 1 && f2 ==1) {
-				//we have exausted all possbilities
-				LogManager.Log("pathing failed!", 2);
-				return 0;
+			LogManager.Log("first try to fudge", 4);
+			if(fudge == 1 && f1 == 0 && f2 == 0) {
+				new_route = ConnectStations(100, 100, stationId1, stationId2, 0, 0);
+				if(new_route != null) {
+					return new_route;
+				}
 			}
 			
-			if(new_route != null) {
-				return new_route;
+			else {			
+				LogManager.Log("need to try alternative path", 4);
+			
+				if(f1 == 0 && f2 == 0) {
+					new_route = ConnectStations(1, 100, stationId1, stationId2, 1, 0);
+		
+				}
+				if(f1 == 1 && f2 == 0) {
+					new_route = ConnectStations(1, 100, stationId1, stationId2, 0, 1);
+				}
+				if(f1 == 0  && f2 == 1) {
+					new_route = ConnectStations(1, 100, stationId1, stationId2, 1, 1);
+				}
+				if(f1 == 1 && f2 ==1) {
+					//we have exausted all possbilities
+					LogManager.Log("pathing failed!", 2);
+					return 0;
+				}
+			
+				if(new_route != null) {
+					return new_route;
+				}
 			}
 		}
 			
